@@ -32,11 +32,15 @@
 
         /* --- Animations --- */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(31, 221, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(31, 221, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(31, 221, 255, 0); } }
+        @keyframes pulse { 
+            0% { box-shadow: 0 0 0 0 rgba(31, 221, 255, 0.4); } 
+            70% { box-shadow: 0 0 0 10px rgba(31, 221, 255, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(31, 221, 255, 0); } 
+        }
 
         /* --- Components --- */
         .container { 
-            width: 100%; 
+            width: 100%;
             max-width: 1400px; 
             margin: 0 auto; 
             padding: clamp(10px, 3vw, 20px); 
@@ -50,7 +54,7 @@
             border: none;
             padding: 0.8em 1.5em;
             color: white;
-            border-radius: 5px; /* Eckiger für Embed Look */
+            border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
             font-size: 1rem;
@@ -69,9 +73,10 @@
 
         .btn-danger { background: #ed4245; box-shadow: none; }
         .btn-success { background: #3ba55c; box-shadow: none; }
+        .btn-info { background: #5865F2; box-shadow: none; }
 
-        /* --- Auth Screen --- */
-        #auth-screen {
+        /* --- Auth & Ban Screen --- */
+        #auth-screen, #ban-screen {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -93,7 +98,7 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        input {
+        input, textarea {
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -104,7 +109,7 @@
             font-size: 1rem;
             transition: 0.3s;
         }
-        input:focus { border-color: var(--secondary); }
+        input:focus, textarea:focus { border-color: var(--secondary); }
 
         /* --- Navbar --- */
         nav {
@@ -123,7 +128,6 @@
         .nav-icons i { font-size: 1.4rem; cursor: pointer; transition: 0.2s; position: relative; }
         .nav-icons i:hover { color: var(--secondary); }
         
-        /* Neuer Resume Button Style */
         .resume-chat-btn {
             background: var(--secondary);
             color: #000;
@@ -133,11 +137,13 @@
             font-weight: bold;
             cursor: pointer;
             animation: pulse 2s infinite;
-            display: flex; align-items: center; gap: 5px;
+            display: flex;
+            align-items: center; gap: 5px;
         }
 
         .badge {
-            position: absolute; top: -8px; right: -8px;
+            position: absolute;
+            top: -8px; right: -8px;
             background: #ed4245; color: white;
             border-radius: 50%; padding: 2px 6px; font-size: 0.7rem;
         }
@@ -145,7 +151,7 @@
         /* --- Shop Grid --- */
         .shop-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: clamp(15px, 3vw, 25px);
             margin-top: 20px;
             padding-bottom: 80px;
@@ -169,11 +175,43 @@
         
         .item-icon { font-size: 3rem; color: var(--secondary); margin-bottom: 15px; }
         .item-name { font-size: 1.3rem; font-weight: 700; margin-bottom: 5px; color: white; }
-        .price { font-size: 1.5rem; color: #faa61a; margin: 10px 0 20px; font-weight: bold; }
+        .price { font-size: 1.5rem; color: #faa61a; margin: 10px 0 10px; font-weight: bold; }
+        
+        .qty-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .qty-input {
+            width: 60px;
+            padding: 5px;
+            text-align: center;
+            margin: 0;
+            background: #202225;
+            border: 1px solid #40444b;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .cart-btn {
+            background: #40444b;
+            color: var(--secondary);
+            flex: 0 0 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            padding: 0;
+        }
 
         /* --- Chat & Embeds --- */
         .modal-overlay {
-            position: fixed; inset: 0;
+            position: fixed;
+            inset: 0;
             background: rgba(0,0,0,0.85); 
             backdrop-filter: blur(5px);
             z-index: 100;
@@ -183,7 +221,7 @@
         }
 
         .modal-content {
-            background: #36393f; 
+            background: #36393f;
             width: 100%; 
             height: 100%;
             display: flex; flex-direction: column; 
@@ -202,7 +240,7 @@
         }
 
         .chat-header { 
-            padding: 15px; 
+            padding: 15px;
             background: #2f3136; 
             display: flex; justify-content: space-between; align-items: center; 
             border-bottom: 1px solid #202225;
@@ -210,7 +248,7 @@
         }
 
         .chat-messages { 
-            flex: 1; 
+            flex: 1;
             padding: 20px; 
             overflow-y: auto; 
             display: flex; flex-direction: column; gap: 15px; 
@@ -239,7 +277,7 @@
         .embed-content { color: #dcddde; line-height: 1.4; word-wrap: break-word; }
 
         .chat-input-area { 
-            padding: 15px; 
+            padding: 15px;
             background: #40444b; 
             display: flex; gap: 10px; 
         }
@@ -254,9 +292,21 @@
             text-align: center;
         }
 
+        /* --- Cart List Style --- */
+        .cart-item-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #202225; padding: 10px; margin-bottom: 5px; border-radius: 4px;
+        }
     </style>
 </head>
 <body>
+
+    <div id="ban-screen" class="hidden" style="background: #000; z-index: 9999; position: fixed; inset: 0;">
+        <i class="fas fa-ban" style="font-size: 5rem; color: #ed4245; margin-bottom: 20px;"></i>
+        <h1 style="color: #ed4245;">ACCOUNT PERMANENT GESPERRT</h1>
+        <p>Ein Administrator hat deinen Zugang zu diesem Shop dauerhaft deaktiviert.</p>
+        <button class="btn btn-danger" onclick="logout()" style="margin-top: 30px;">Abmelden</button>
+    </div>
 
     <div id="auth-screen">
         <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Knödel's Shop <i class="fas fa-shopping-cart"></i></h1>
@@ -265,6 +315,7 @@
             <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 20px;">
                 Nutze deinen Roblox Namen.<br>
             </p>
+    
             <input type="text" id="username" placeholder="Roblox Username" autocomplete="off">
             <input type="password" id="password" placeholder="Passwort" autocomplete="off">
             <button class="btn" onclick="handleAuth()" id="auth-btn" style="margin-top: 15px;">Starten</button>
@@ -279,14 +330,22 @@
         <nav>
             <div class="nav-logo">Shop</div>
             
-            <div id="resume-chat-btn" class="resume-chat-btn hidden" onclick="resumeActiveChat()">
-                <i class="fas fa-comment-dots"></i> Aktiver Chat
+            <div id="resume-chat-btn" class="resume-chat-btn hidden" onclick="showMyActiveChats()">
+                <i class="fas fa-comment-dots"></i> Aktive Chats
             </div>
 
             <div class="nav-icons">
+                <div style="position: relative;">
+                    <i class="fas fa-shopping-basket" onclick="openCart()" title="Warenkorb"></i>
+                    <span id="cart-badge" class="badge hidden">0</span>
+                </div>
+
                 <i class="fas fa-envelope" onclick="openInbox()">
                     <span id="inbox-badge" class="badge hidden">0</span>
                 </i>
+                
+                <i class="fas fa-users-cog hidden" id="admin-user-btn" onclick="openUserManager()" title="User Verwalten" style="color: var(--primary);"></i>
+
                 <i class="fas fa-user-circle" onclick="openProfile()"></i>
                 <i class="fas fa-sign-out-alt" onclick="logout()" title="Abmelden" style="color: #ed4245;"></i>
             </div>
@@ -294,7 +353,7 @@
 
         <div class="container">
             <div id="admin-panel" class="hidden" style="margin-bottom: 30px; padding: 20px; background: #2f3136; border-left: 4px solid var(--primary); border-radius: 5px;">
-                <h3 style="margin-top: 0; color:white;"><i class="fas fa-crown"></i> Admin Panel</h3>
+                <h3 style="margin-top: 0; color:white;"><i class="fas fa-crown"></i> Admin Dashboard (Aktive Tickets)</h3>
                 <div id="active-chats-list" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
             </div>
 
@@ -333,6 +392,65 @@
             <div class="chat-input-area">
                 <input type="text" id="msg-input" placeholder="Nachricht an Support..." style="margin:0; background: #2f3136; border: none;">
                 <button class="btn" onclick="sendMessage()" style="width: 50px; padding: 0;"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="user-manager-modal" class="modal-overlay hidden">
+        <div class="auth-box" style="border-color: #5865F2;">
+            <div style="display:flex; justify-content:space-between;">
+                <h2 style="margin-top:0;">User Verwalten</h2>
+                <i class="fas fa-times" style="cursor:pointer;" onclick="document.getElementById('user-manager-modal').classList.add('hidden')"></i>
+            </div>
+            
+            <input type="text" id="admin-search-user" placeholder="Username eingeben (z.B. Enno)...">
+            <button class="btn btn-info" onclick="searchUserForAdmin()">Verwalten</button>
+
+            <div id="user-manage-actions" class="hidden" style="margin-top: 20px; text-align: left; background: #202225; padding: 15px; border-radius: 5px;">
+                <h3 id="manage-target-name" style="margin-top:0; color: var(--secondary);">User gefunden</h3>
+                <p style="font-size:0.8rem; opacity:0.7;" id="manage-target-uid"></p>
+                <hr style="border-color: rgba(255,255,255,0.1);">
+                
+                <div style="margin-bottom: 15px;">
+                    <label><b>Nachricht senden:</b></label>
+                    <input type="text" id="admin-notif-title" placeholder="Titel..." style="margin-bottom: 5px;">
+                    <textarea id="admin-notif-msg" placeholder="Nachricht..." rows="2"></textarea>
+                    <button class="btn" style="font-size: 0.8rem;" onclick="sendAdminNotification()">Senden</button>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <p id="ban-status-text">Status: Normal</p>
+                    <button class="btn btn-danger" id="btn-ban-action" onclick="banUserAction()">Account Permanent sperren</button>
+                    <button class="btn btn-success hidden" id="btn-unban-action" onclick="unbanUserAction()">Account entsperren</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="my-chats-modal" class="modal-overlay hidden">
+        <div class="auth-box" style="max-width: 400px;">
+            <div style="display:flex; justify-content:space-between; align-items: center;">
+                <h3 style="margin:0;">Meine offenen Käufe</h3>
+                <i class="fas fa-times" style="cursor:pointer;" onclick="document.getElementById('my-chats-modal').classList.add('hidden')"></i>
+            </div>
+            <div id="my-chats-list" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+    </div>
+
+    <div id="cart-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="chat-header">
+                <span><i class="fas fa-shopping-basket"></i> Dein Warenkorb</span>
+                <button onclick="document.getElementById('cart-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;" id="cart-items-list">
+                </div>
+            <div style="padding: 20px; background: #2f3136; border-top: 1px solid #202225;">
+                <div style="display:flex; justify-content:space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px;">
+                    <span>Gesamt:</span>
+                    <span id="cart-total-display">0 €</span>
+                </div>
+                <button class="btn" onclick="checkoutCart()">Alles Kaufen</button>
             </div>
         </div>
     </div>
@@ -383,6 +501,7 @@
 
         const ITEMS = [
             { name: "RPG", price: 125000, icon: "fa-rocket" },
+            { name: "RPG Munition", price: 5000, icon: "fa-bomb" }, // NEU
             { name: "Advanced West", price: 10000, icon: "fa-shield-halved" },
             { name: "Metal", price: 500, icon: "fa-cubes" },
             { name: "Molotov", price: 1000, icon: "fa-fire" },
@@ -396,8 +515,10 @@
         let currentUser = null;
         let isRegistering = false;
         let currentChatId = null;
-        let myActiveChatId = null; // Speichert ID für den "Zurück zum Chat" Button
         const ADMIN_USERNAME = "Knödel";
+        
+        // Warenkorb
+        let cart = [];
 
         // --- AUTH ---
         window.toggleAuthMode = () => {
@@ -413,16 +534,15 @@
             if(!user || !pass) return alert("Bitte alles ausfüllen!");
             
             const email = user.toLowerCase().replace(/\s/g, '') + "@shop-rpg.local";
-
             if(isRegistering) {
                 createUserWithEmailAndPassword(auth, email, pass)
                     .then((uc) => {
-                        // SPEICHERT PASSWORT IN DB (Nur für RPG Zwecke!)
                         set(ref(db, 'users/' + uc.user.uid), { 
                             username: user, 
                             spent: 0, 
                             email: email,
-                            password: pass 
+                            password: pass,
+                            banned: false
                         });
                     })
                     .catch((e) => alert("Fehler: " + e.message));
@@ -436,27 +556,35 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                document.getElementById("auth-screen").classList.add("hidden");
-                document.getElementById("app-screen").classList.remove("hidden");
+                // Check if Banned logic is inside loadUserData
                 loadUserData();
-                renderShop();
-                checkIfAdmin();
-                listenForMyActiveChats();
             } else {
                 currentUser = null;
                 document.getElementById("auth-screen").classList.remove("hidden");
                 document.getElementById("app-screen").classList.add("hidden");
+                document.getElementById("ban-screen").classList.add("hidden");
             }
         });
 
-        // --- USER DATA & PROFILE ---
+        // --- USER DATA & PROFILE & BAN CHECK ---
         function loadUserData() {
             const userRef = ref(db, 'users/' + currentUser.uid);
             onValue(userRef, (snapshot) => {
                 const data = snapshot.val();
                 if(data) {
+                    // BAN CHECK
+                    if(data.banned === true) {
+                        document.getElementById("app-screen").classList.add("hidden");
+                        document.getElementById("auth-screen").classList.add("hidden");
+                        document.getElementById("ban-screen").classList.remove("hidden");
+                        return; // Stop loading app
+                    } else {
+                        document.getElementById("ban-screen").classList.add("hidden");
+                        document.getElementById("auth-screen").classList.add("hidden");
+                        document.getElementById("app-screen").classList.remove("hidden");
+                    }
+
                     document.getElementById("profile-name").innerText = data.username;
-                    // ZEIGT PASSWORT AN
                     document.getElementById("profile-pass").innerText = data.password || "Nicht gespeichert";
                     document.getElementById("profile-spent").innerText = (data.spent || 0).toLocaleString() + " €";
                     
@@ -467,19 +595,26 @@
                     } else {
                         document.getElementById("inbox-badge").classList.add("hidden");
                     }
+
+                    renderShop();
+                    checkIfAdmin(data.username);
+                    listenForMyActiveChats();
                 }
             });
         }
 
-        async function checkIfAdmin() {
-            const snap = await get(ref(db, 'users/' + currentUser.uid));
-            if(snap.val() && snap.val().username === ADMIN_USERNAME) {
+        function checkIfAdmin(username) {
+            if(username === ADMIN_USERNAME) {
                 document.getElementById("admin-panel").classList.remove("hidden");
+                document.getElementById("admin-user-btn").classList.remove("hidden"); // User Manager Button
                 listenForAdminChats();
+            } else {
+                document.getElementById("admin-panel").classList.add("hidden");
+                document.getElementById("admin-user-btn").classList.add("hidden");
             }
         }
 
-        // --- SHOP & CONFIRMATION ---
+        // --- SHOP, CART & QUANTITY ---
         function renderShop() {
             const container = document.getElementById("shop-container");
             container.innerHTML = "";
@@ -492,21 +627,125 @@
                             <div class="item-name">${item.name}</div>
                             <div class="price">${item.price.toLocaleString()} €</div>
                         </div>
-                        <button class="btn" onclick="askConfirmation('${item.name}', ${item.price})">
-                            Kaufen
-                        </button>
+                        
+                        <div class="qty-controls">
+                            <label>Menge:</label>
+                            <input type="number" id="qty-${index}" class="qty-input" value="1" min="1">
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn cart-btn" onclick="addToCart(${index})">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="btn" style="flex:1;" onclick="askConfirmation(${index})">
+                                Kaufen
+                            </button>
+                        </div>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        window.askConfirmation = (name, price) => {
-            document.getElementById("confirm-text").innerText = `Möchtest du "${name}" für ${price.toLocaleString()} € wirklich kaufen?`;
+        // --- CART LOGIC ---
+        window.addToCart = (index) => {
+            const item = ITEMS[index];
+            const qtyInput = document.getElementById(`qty-${index}`);
+            const qty = parseInt(qtyInput.value);
+            
+            if(qty < 1) return alert("Menge muss mind. 1 sein");
+
+            cart.push({
+                name: item.name,
+                singlePrice: item.price,
+                qty: qty,
+                totalPrice: item.price * qty
+            });
+            
+            updateCartBadge();
+            
+            // Kleiner Effekt
+            const btn = document.querySelectorAll('.cart-btn')[index];
+            btn.style.color = "#3ba55c";
+            setTimeout(() => btn.style.color = "var(--secondary)", 500);
+        };
+
+        function updateCartBadge() {
+            const badge = document.getElementById("cart-badge");
+            badge.innerText = cart.length;
+            if(cart.length > 0) badge.classList.remove("hidden");
+            else badge.classList.add("hidden");
+        }
+
+        window.openCart = () => {
+            document.getElementById("cart-modal").classList.remove("hidden");
+            renderCartList();
+        };
+
+        function renderCartList() {
+            const list = document.getElementById("cart-items-list");
+            list.innerHTML = "";
+            let fullTotal = 0;
+
+            if(cart.length === 0) {
+                list.innerHTML = "<div style='text-align:center; opacity:0.5'>Warenkorb leer</div>";
+            } else {
+                cart.forEach((item, idx) => {
+                    fullTotal += item.totalPrice;
+                    list.innerHTML += `
+                        <div class="cart-item-row">
+                            <div>
+                                <b>${item.name}</b> (x${item.qty})<br>
+                                <span style="color:#faa61a">${item.totalPrice.toLocaleString()} €</span>
+                            </div>
+                            <i class="fas fa-trash" style="color:#ed4245; cursor:pointer;" onclick="removeFromCart(${idx})"></i>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById("cart-total-display").innerText = fullTotal.toLocaleString() + " €";
+        }
+
+        window.removeFromCart = (idx) => {
+            cart.splice(idx, 1);
+            updateCartBadge();
+            renderCartList();
+        };
+
+        window.checkoutCart = () => {
+            if(cart.length === 0) return;
+            
+            let summaryText = "";
+            let fullPrice = 0;
+            
+            cart.forEach(c => {
+                summaryText += `${c.name} (x${c.qty}), `;
+                fullPrice += c.totalPrice;
+            });
+            
+            // Remove trailing comma
+            summaryText = summaryText.slice(0, -2);
+            
+            // Use generic buy logic but with cart data
+            startTrade(summaryText, fullPrice);
+            cart = []; // Empty cart
+            updateCartBadge();
+            document.getElementById("cart-modal").classList.add("hidden");
+        };
+
+        // --- DIRECT BUY LOGIC ---
+        window.askConfirmation = (index) => {
+            const item = ITEMS[index];
+            const qty = parseInt(document.getElementById(`qty-${index}`).value);
+            if(qty < 1) return alert("Ungültige Menge");
+            
+            const total = item.price * qty;
+
+            document.getElementById("confirm-text").innerText = `Möchtest du ${qty}x "${item.name}" für ${total.toLocaleString()} € wirklich kaufen?`;
             document.getElementById("confirm-modal").classList.remove("hidden");
-            // Setzen der Funktion für den JA Button
+            
             document.getElementById("confirm-btn-action").onclick = () => {
-                startTrade(name, price);
+                startTrade(`${item.name} (x${qty})`, total);
                 closeConfirm();
             };
         };
@@ -523,24 +762,24 @@
             await set(chatRef, {
                 buyerId: currentUser.uid,
                 buyerName: username,
-                product: itemName,
+                product: itemName, // Enthält jetzt Menge oder Liste
                 price: itemPrice,
                 status: 'active',
                 timestamp: Date.now()
             });
 
-            // System Embed Message
             push(ref(db, `chats/${chatId}/messages`), {
                 sender: 'System',
-                text: `🛒 **NEUER KAUF**\nUser: ${username}\nItem: ${itemName}\nPreis: ${itemPrice}€`,
+                text: `🛒 **NEUER KAUF**\nUser: ${username}\nItems: ${itemName}\nGesamt: ${itemPrice.toLocaleString()}€`,
                 isSystem: true
             });
-
             openChat(chatId);
         }
 
         window.openChat = (chatId) => {
             currentChatId = chatId;
+            // Close other modals if open
+            document.getElementById("my-chats-modal").classList.add("hidden");
             document.getElementById("chat-modal").classList.remove("hidden");
             
             onValue(ref(db, `chats/${chatId}/messages`), (snapshot) => {
@@ -550,8 +789,6 @@
                 if(msgs) {
                     Object.values(msgs).forEach(msg => {
                         const div = document.createElement("div");
-                        
-                        // EMBED LOGIC
                         if(msg.isSystem || msg.sender === 'System') {
                             div.className = "embed-msg embed-system";
                             div.innerHTML = `<span class="embed-content">${msg.text.replace(/\n/g, '<br>')}</span>`;
@@ -568,7 +805,6 @@
                     container.scrollTop = container.scrollHeight;
                 }
             });
-
             get(ref(db, 'users/' + currentUser.uid)).then(snap => {
                 if(snap.val().username === ADMIN_USERNAME) {
                     document.getElementById("admin-chat-actions").classList.remove("hidden");
@@ -584,7 +820,6 @@
             if(!text || !currentChatId) return;
 
             const snap = await get(ref(db, 'users/' + currentUser.uid));
-            
             push(ref(db, `chats/${currentChatId}/messages`), {
                 sender: snap.val().username,
                 senderId: currentUser.uid,
@@ -599,42 +834,146 @@
             currentChatId = null;
         };
 
-        // --- RESUME CHAT LOGIC (Oben Button) ---
+        // --- AKTIVE CHATS USER (LISTE) ---
+        let myActiveChats = {};
+
         function listenForMyActiveChats() {
             onValue(ref(db, 'chats'), (snapshot) => {
                 const chats = snapshot.val();
-                let foundActive = false;
+                myActiveChats = {};
+                let count = 0;
                 
                 if(chats) {
                     Object.entries(chats).forEach(([id, data]) => {
-                        // Wenn ich der Käufer bin UND Status active ist
                         if(data.buyerId === currentUser.uid && data.status === 'active') {
-                            foundActive = true;
-                            myActiveChatId = id;
+                            myActiveChats[id] = data;
+                            count++;
                         }
                     });
                 }
 
                 const btn = document.getElementById("resume-chat-btn");
-                if(foundActive) {
+                if(count > 0) {
                     btn.classList.remove("hidden");
+                    btn.innerHTML = `<i class="fas fa-comment-dots"></i> Aktive Chats (${count})`;
                 } else {
                     btn.classList.add("hidden");
-                    myActiveChatId = null;
                 }
             });
         }
 
-        window.resumeActiveChat = () => {
-            if(myActiveChatId) openChat(myActiveChatId);
+        window.showMyActiveChats = () => {
+            const keys = Object.keys(myActiveChats);
+            if(keys.length === 1) {
+                // Wenn nur einer, direkt öffnen
+                openChat(keys[0]);
+            } else {
+                // Liste anzeigen
+                const list = document.getElementById("my-chats-list");
+                list.innerHTML = "";
+                keys.forEach(id => {
+                    const data = myActiveChats[id];
+                    const btn = document.createElement("button");
+                    btn.className = "btn";
+                    btn.style.background = "#202225";
+                    btn.style.textAlign = "left";
+                    btn.style.justifyContent = "flex-start";
+                    btn.innerHTML = `<span>🛒 ${data.product}</span> <span style="margin-left:auto; color:#faa61a">${data.price}€</span>`;
+                    btn.onclick = () => openChat(id);
+                    list.appendChild(btn);
+                });
+                document.getElementById("my-chats-modal").classList.remove("hidden");
+            }
         };
 
-        // --- ADMIN & INBOX ---
+        // --- ADMIN PANEL & USER MANAGEMENT ---
+        let targetUserUid = null;
+
+        window.openUserManager = () => {
+            document.getElementById("user-manager-modal").classList.remove("hidden");
+            document.getElementById("user-manage-actions").classList.add("hidden");
+            document.getElementById("admin-search-user").value = "";
+        };
+
+        window.searchUserForAdmin = async () => {
+            const name = document.getElementById("admin-search-user").value.trim();
+            if(!name) return;
+
+            const snap = await get(ref(db, 'users'));
+            const users = snap.val();
+            let foundUid = null;
+            let foundData = null;
+
+            if(users) {
+                Object.entries(users).forEach(([uid, data]) => {
+                    if(data.username.toLowerCase() === name.toLowerCase()) {
+                        foundUid = uid;
+                        foundData = data;
+                    }
+                });
+            }
+
+            if(foundUid) {
+                targetUserUid = foundUid;
+                document.getElementById("user-manage-actions").classList.remove("hidden");
+                document.getElementById("manage-target-name").innerText = foundData.username;
+                document.getElementById("manage-target-uid").innerText = "ID: " + foundUid;
+                
+                // Ban Buttons logic
+                if(foundData.banned) {
+                    document.getElementById("ban-status-text").innerText = "Status: GESPERRT";
+                    document.getElementById("ban-status-text").style.color = "#ed4245";
+                    document.getElementById("btn-ban-action").classList.add("hidden");
+                    document.getElementById("btn-unban-action").classList.remove("hidden");
+                } else {
+                    document.getElementById("ban-status-text").innerText = "Status: Normal";
+                    document.getElementById("ban-status-text").style.color = "#3ba55c";
+                    document.getElementById("btn-ban-action").classList.remove("hidden");
+                    document.getElementById("btn-unban-action").classList.add("hidden");
+                }
+            } else {
+                alert("User nicht gefunden!");
+                document.getElementById("user-manage-actions").classList.add("hidden");
+            }
+        };
+
+        window.sendAdminNotification = async () => {
+            if(!targetUserUid) return;
+            const title = document.getElementById("admin-notif-title").value;
+            const msg = document.getElementById("admin-notif-msg").value;
+            
+            if(!title || !msg) return alert("Titel und Text eingeben.");
+
+            await push(ref(db, `users/${targetUserUid}/inbox`), {
+                title: title,
+                message: msg,
+                timestamp: Date.now()
+            });
+            alert("Nachricht gesendet!");
+        };
+
+        window.banUserAction = async () => {
+            if(!targetUserUid) return;
+            if(!confirm("User wirklich permanent sperren?")) return;
+            
+            await update(ref(db, `users/${targetUserUid}`), { banned: true });
+            alert("User gesperrt.");
+            document.getElementById("user-manager-modal").classList.add("hidden");
+        };
+
+        window.unbanUserAction = async () => {
+            if(!targetUserUid) return;
+            await update(ref(db, `users/${targetUserUid}`), { banned: false });
+            alert("User entsperrt.");
+            document.getElementById("user-manager-modal").classList.add("hidden");
+        };
+
         function listenForAdminChats() {
             onValue(ref(db, 'chats'), (snapshot) => {
                 const chats = snapshot.val();
                 const list = document.getElementById("active-chats-list");
                 list.innerHTML = "";
+            
                 if(chats) {
                     Object.entries(chats).forEach(([id, data]) => {
                         if(data.status === 'active') {
@@ -642,7 +981,9 @@
                             btn.className = "btn";
                             btn.style.fontSize = "0.8rem";
                             btn.style.background = "#202225";
-                            btn.innerHTML = `🛒 ${data.buyerName} (${data.product})`;
+                            // Shorten product name if too long
+                            const prodName = data.product.length > 20 ? data.product.substring(0, 18)+"..." : data.product;
+                            btn.innerHTML = `🛒 ${data.buyerName}<br><small>${prodName}</small>`;
                             btn.onclick = () => openChat(id);
                             list.appendChild(btn);
                         }
@@ -661,10 +1002,9 @@
             await update(userRef, { spent: newSpent });
             await push(ref(db, `users/${chatData.buyerId}/inbox`), {
                 title: "Kauf Erfolgreich! ✅",
-                message: `Du hast ${chatData.product} erhalten.`,
+                message: `Du hast erhalten:\n${chatData.product}`,
                 timestamp: Date.now()
             });
-
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
         };
@@ -675,10 +1015,9 @@
 
             await push(ref(db, `users/${chatData.buyerId}/inbox`), {
                 title: "Kauf abgebrochen ❌",
-                message: `Kauf von ${chatData.product} storniert.`,
+                message: `Kauf storniert:\n${chatData.product}`,
                 timestamp: Date.now()
             });
-
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
         };
@@ -695,9 +1034,10 @@
                 
                 Object.values(msgs).reverse().forEach(msg => {
                     const div = document.createElement("div");
-                    div.className = "embed-msg embed-system"; // Recycle Embed Style
+                    div.className = "embed-msg embed-system"; 
                     div.style.marginBottom = "10px";
-                    div.innerHTML = `<b>${msg.title}</b><br>${msg.message}<br><small style='opacity:0.5'>${new Date(msg.timestamp).toLocaleTimeString()}</small>`;
+                    div.style.textAlign = "left";
+                    div.innerHTML = `<b>${msg.title}</b><br>${msg.message.replace(/\n/g, '<br>')}<br><small style='opacity:0.5; display:block; margin-top:5px;'>${new Date(msg.timestamp).toLocaleTimeString()}</small>`;
                     list.appendChild(div);
                 });
             });
