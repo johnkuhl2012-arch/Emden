@@ -58,7 +58,7 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 1rem;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
             box-shadow: 0 4px 15px rgba(255, 75, 31, 0.3);
             width: 100%;
             max-width: 300px;
@@ -75,6 +75,14 @@
         .btn-success { background: #3ba55c; box-shadow: none; }
         .btn-warning { background: #faa61a; box-shadow: none; color: black; }
         .btn-info { background: #5865F2; box-shadow: none; }
+        
+        .btn-disabled {
+            background: #4f545c !important;
+            color: #72767d !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
 
         /* --- Auth & Ban Screen --- */
         #auth-screen, #ban-screen {
@@ -97,6 +105,8 @@
             max-width: 450px;
             text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         input, textarea {
@@ -170,9 +180,16 @@
             justify-content: space-between;
             height: 100%;
             animation: fadeIn 0.6s ease backwards;
+            position: relative;
         }
         
         .item-card:hover { transform: translateY(-5px); background: #36393f; }
+        
+        /* Grauschleier für Out of Stock Items */
+        .item-card.out-of-stock {
+            border-left-color: #555;
+            opacity: 0.8;
+        }
         
         .item-icon { font-size: 3rem; color: var(--secondary); margin-bottom: 15px; }
         .item-name { font-size: 1.3rem; font-weight: 700; margin-bottom: 5px; color: white; }
@@ -293,8 +310,8 @@
             text-align: center;
         }
 
-        /* --- Cart List Style --- */
-        .cart-item-row {
+        /* --- Cart & History List Style --- */
+        .list-item-row {
             display: flex;
             justify-content: space-between; align-items: center;
             background: #202225; padding: 10px; margin-bottom: 5px; border-radius: 4px;
@@ -310,6 +327,27 @@
             color: #ff9068;
             font-family: monospace;
             font-size: 1.5rem;
+        }
+        
+        /* --- Product Manager List --- */
+        .product-manage-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #202225;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+        }
+        
+        /* --- Styled User Card --- */
+        .user-manage-card {
+            background: #2f3136;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -364,7 +402,10 @@
                     <span id="inbox-badge" class="badge hidden">0</span>
                 </i>
                 
-                <i class="fas fa-users-cog hidden" id="admin-user-btn" onclick="openUserManager()" title="User Verwalten" style="color: var(--primary);"></i>
+                <div id="admin-tools-container" class="hidden" style="display:flex; gap:15px; border-left: 1px solid #444; padding-left: 15px;">
+                    <i class="fas fa-boxes" onclick="openProductManager()" title="Produkte verwalten" style="color: #faa61a;"></i>
+                    <i class="fas fa-users-cog" onclick="openUserManager()" title="User Verwalten" style="color: var(--secondary);"></i>
+                </div>
 
                 <i class="fas fa-user-circle" onclick="openProfile()"></i>
                 <i class="fas fa-sign-out-alt" onclick="logout()" title="Abmelden" style="color: #ed4245;"></i>
@@ -416,49 +457,82 @@
         </div>
     </div>
 
+    <div id="product-manager-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="chat-header" style="background: #202225;">
+                <span><i class="fas fa-boxes"></i> Produkte verwalten</span>
+                <button onclick="document.getElementById('product-manager-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="product-manage-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;">
+                </div>
+            <div style="padding: 20px; background: #2f3136; text-align: center;">
+                <button class="btn btn-info" onclick="saveStockSettings()">Speichern & Aktualisieren</button>
+            </div>
+        </div>
+    </div>
+
     <div id="user-manager-modal" class="modal-overlay hidden">
-        <div class="auth-box" style="border-color: #5865F2;">
-            <div style="display:flex; justify-content:space-between;">
-                <h2 style="margin-top:0;">User Verwalten</h2>
-                <i class="fas fa-times" style="cursor:pointer;" onclick="document.getElementById('user-manager-modal').classList.add('hidden')"></i>
+        <div class="auth-box" style="border-color: #5865F2; max-width: 500px; text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2 style="margin:0;"><i class="fas fa-users-cog"></i> User Verwaltung</h2>
+                <i class="fas fa-times" style="cursor:pointer; font-size: 1.2rem;" onclick="document.getElementById('user-manager-modal').classList.add('hidden')"></i>
             </div>
             
-            <input type="text" id="admin-search-user" placeholder="Username eingeben (z.B. Enno)...">
-            <button class="btn btn-info" onclick="searchUserForAdmin()">Verwalten</button>
-
-            <div id="user-manage-actions" class="hidden" style="margin-top: 20px; text-align: left; background: #202225; padding: 15px; border-radius: 5px;">
-                <h3 id="manage-target-name" style="margin-top:0; color: var(--secondary);">User gefunden</h3>
-                <p style="font-size:0.8rem; opacity:0.7;" id="manage-target-uid"></p>
-                <hr style="border-color: rgba(255,255,255,0.1);">
-                
-                <div style="margin-bottom: 15px;">
-                    <label><b>Nachricht senden:</b></label>
-                    <input type="text" id="admin-notif-title" placeholder="Titel..." style="margin-bottom: 5px;">
-                    <textarea id="admin-notif-msg" placeholder="Nachricht..." rows="2"></textarea>
-                    <button class="btn" style="font-size: 0.8rem;" onclick="sendAdminNotification()">Senden</button>
+            <div style="background: #202225; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <label style="font-size: 0.9rem; color: #aaa;">Suche</label>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <input type="text" id="admin-search-user" placeholder="Username (z.B. Enno)..." style="margin:0;">
+                    <button class="btn btn-info" onclick="searchUserForAdmin()" style="width: auto;"><i class="fas fa-search"></i></button>
                 </div>
+            </div>
 
-                <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                    <p id="ban-status-text">Status: Normal</p>
-                    
-                    <div id="ban-buttons-container" style="display: flex; gap: 5px; flex-wrap: wrap;">
-                        <button class="btn btn-warning" id="btn-ban-24h" onclick="banUser24hAction()" style="font-size: 0.8rem;">Ban 24h</button>
-                        <button class="btn btn-danger" id="btn-ban-action" onclick="banUserAction()" style="font-size: 0.8rem;">Permanent Ban</button>
+            <div id="user-manage-actions" class="hidden user-manage-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3 id="manage-target-name" style="margin:0; color: var(--secondary); font-size: 1.4rem;">User</h3>
+                        <p style="font-size:0.75rem; opacity:0.6; margin: 5px 0 0;" id="manage-target-uid">ID: ...</p>
                     </div>
-                    
-                    <button class="btn btn-success hidden" id="btn-unban-action" onclick="unbanUserAction()">Account entsperren</button>
+                    <div id="ban-status-badge" style="padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">Status</div>
                 </div>
+
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+                
+                <h4 style="margin: 0 0 10px; font-size: 1rem;"><i class="fas fa-paper-plane"></i> Nachricht senden</h4>
+                <input type="text" id="admin-notif-title" placeholder="Betreff..." style="background: #18191c; border: 1px solid #444; margin-bottom: 8px;">
+                <textarea id="admin-notif-msg" placeholder="Nachricht..." rows="2" style="background: #18191c; border: 1px solid #444; margin-bottom: 8px;"></textarea>
+                <button class="btn" style="font-size: 0.9rem; width: 100%;" onclick="sendAdminNotification()">Absenden</button>
+
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+
+                <h4 style="margin: 0 0 10px; font-size: 1rem;"><i class="fas fa-gavel"></i> Sanktionen</h4>
+                <div id="ban-buttons-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="btn btn-warning" onclick="banUser24hAction()" style="font-size: 0.9rem; width: 100%;">24h Ban</button>
+                    <button class="btn btn-danger" onclick="banUserAction()" style="font-size: 0.9rem; width: 100%;">Perma Ban</button>
+                </div>
+                
+                <button class="btn btn-success hidden" id="btn-unban-action" onclick="unbanUserAction()" style="width: 100%; margin-top: 10px;">Account entsperren</button>
             </div>
         </div>
     </div>
 
     <div id="my-chats-modal" class="modal-overlay hidden">
         <div class="auth-box" style="max-width: 400px;">
-            <div style="display:flex; justify-content:space-between; align-items: center;">
+             <div style="display:flex; justify-content:space-between; align-items: center;">
                 <h3 style="margin:0;">Meine offenen Käufe</h3>
                 <i class="fas fa-times" style="cursor:pointer;" onclick="document.getElementById('my-chats-modal').classList.add('hidden')"></i>
             </div>
             <div id="my-chats-list" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="chat-header">
+                <span><i class="fas fa-history"></i> Dein Kaufverlauf</span>
+                <button onclick="document.getElementById('history-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="history-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;">
+                </div>
         </div>
     </div>
 
@@ -475,7 +549,7 @@
                     <span>Gesamt:</span>
                     <span id="cart-total-display">0 €</span>
                 </div>
-                <button class="btn" onclick="checkoutCart()">Alles Kaufen</button>
+                <button class="btn" id="cart-checkout-btn" onclick="checkoutCart()">Alles Kaufen</button>
             </div>
         </div>
     </div>
@@ -494,6 +568,9 @@
                 <hr style="border-color: rgba(255,255,255,0.1);">
                 <p style="font-size: 1.2rem;"><b>Ausgegeben:</b> <span id="profile-spent" style="color: var(--secondary); font-weight: bold;">0€</span></p>
             </div>
+            <button class="btn" style="margin-top: 20px; background: #40444b; width: 100%;" onclick="openHistory()">
+                <i class="fas fa-history"></i> Kaufverlauf ansehen
+            </button>
         </div>
     </div>
 
@@ -534,7 +611,6 @@
         const db = getDatabase(app);
 
         const ITEMS = [
-
             { name: "RPG", price: 100000, icon: "fa-rocket" },
             { name: "RPG Munition", price: 50000, icon: "fa-bomb" }, 
             { name: "Military West", price: 7500, icon: "fa-shield-halved" },
@@ -542,7 +618,8 @@
             { name: "West", price: 2500, icon: "fa-shield-halved" },
             { name: "Metal", price: 500, icon: "fa-cubes" },
             { name: "Molotov", price: 1000, icon: "fa-fire" },
-            { name: "Titanium", price: 1500, icon: "fa-shield-halved" },
+            // Titanium Icon changed to fa-layer-group
+            { name: "Titanium", price: 1500, icon: "fa-layer-group" },
             { name: "Cloth", price: 750, icon: "fa-shirt" },
             { name: "Helm", price: 3500, icon: "fa-helmet-safety" },
             { name: "Vault Skin Case", price: 7500, icon: "fa-box" },
@@ -557,7 +634,7 @@
             { name: "Feuerwerks RPG", price: 75000, icon: "fa-meteor" },
             { name: "Feuerwerks RPG Munition", price: 10000, icon: "fa-fire" },
         ];
-
+        
         let currentUser = null;
         let isRegistering = false;
         let currentChatId = null;
@@ -565,6 +642,9 @@
         const ADMIN_USERNAME = "Knödel";
         // Warenkorb
         let cart = [];
+        
+        // Stock Status (lokal)
+        let globalStockData = {};
 
         // --- AUTH ---
         window.toggleAuthMode = () => {
@@ -580,7 +660,6 @@
             if(!user || !pass) return alert("Bitte alles ausfüllen!");
             
             const email = user.toLowerCase().replace(/\s/g, '') + "@shop-rpg.local";
-
             if(isRegistering) {
                 createUserWithEmailAndPassword(auth, email, pass)
                     .then((uc) => {
@@ -623,7 +702,6 @@
                 if(data) {
                     // BAN CHECK
                     if(data.banned === true) {
-                        
                         // Check if it is a timed ban
                         if(data.banExpires) {
                             const now = Date.now();
@@ -654,7 +732,6 @@
                     }
 
                     document.getElementById("profile-name").innerText = data.username;
-                    
                     const passEl = document.getElementById("profile-pass");
                     passEl.innerText = "••••••";
                     passEl.setAttribute("data-realpass", data.password || "Nicht gespeichert");
@@ -669,16 +746,24 @@
                         document.getElementById("inbox-badge").classList.add("hidden");
                     }
 
-                    renderShop();
-                    checkIfAdmin(data.username);
+                    // Listen to Stock updates first, then render shop
+                    listenToStockUpdates(data.username);
                     listenForMyActiveChats();
                 }
             });
         }
 
+        function listenToStockUpdates(username) {
+            onValue(ref(db, 'stock'), (snapshot) => {
+                globalStockData = snapshot.val() || {};
+                renderShop(); // Re-render Shop when stock changes
+                updateCartWithStock(); // Check if cart items are still valid
+                checkIfAdmin(username); // Call this inside to ensure elements exist
+            });
+        }
+
         function startBanTimer(expiryTimestamp) {
             if(banTimerInterval) clearInterval(banTimerInterval);
-            
             const updateTimer = () => {
                 const now = Date.now();
                 const diff = expiryTimestamp - now;
@@ -692,13 +777,13 @@
                     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    
                     document.getElementById("ban-countdown").innerText = 
                         `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
             };
 
-            updateTimer(); // Initial call
+            updateTimer();
+            // Initial call
             banTimerInterval = setInterval(updateTimer, 1000);
         }
 
@@ -715,11 +800,11 @@
         function checkIfAdmin(username) {
             if(username === ADMIN_USERNAME) {
                 document.getElementById("admin-panel").classList.remove("hidden");
-                document.getElementById("admin-user-btn").classList.remove("hidden"); 
+                document.getElementById("admin-tools-container").classList.remove("hidden"); 
                 listenForAdminChats();
             } else {
                 document.getElementById("admin-panel").classList.add("hidden");
-                document.getElementById("admin-user-btn").classList.add("hidden");
+                document.getElementById("admin-tools-container").classList.add("hidden");
             }
         }
 
@@ -729,42 +814,52 @@
             container.innerHTML = "";
             ITEMS.forEach((item, index) => {
                 const delay = index * 0.05;
+                // Stock Check (undefined means In Stock by default)
+                const inStock = globalStockData[index] !== false; 
+                
+                const btnState = inStock ? '' : 'disabled';
+                const btnClass = inStock ? 'btn' : 'btn btn-disabled';
+                const cardClass = inStock ? 'item-card' : 'item-card out-of-stock';
+                const buyText = inStock ? 'Kaufen' : 'Nicht auf Lager';
+
                 const html = `
-                    <div class="item-card" style="animation-delay: ${delay}s">
+                    <div class="${cardClass}" style="animation-delay: ${delay}s">
                         <div>
-                            <i class="fas ${item.icon} item-icon"></i>
+                             <i class="fas ${item.icon} item-icon"></i>
                             <div class="item-name">${item.name}</div>
                             <div class="price">${item.price.toLocaleString()} €</div>
                         </div>
                         
                         <div class="qty-controls">
                             <label>Menge:</label>
-                            <input type="number" id="qty-${index}" class="qty-input" value="1" min="1">
+                            <input type="number" id="qty-${index}" class="qty-input" value="1" min="1" ${btnState}>
                         </div>
 
                         <div class="action-buttons">
-                            <button class="btn cart-btn" onclick="addToCart(${index})">
-                                <i class="fas fa-plus"></i>
+                            <button class="${btnClass} cart-btn" onclick="addToCart(${index})" ${btnState}>
+                                 <i class="fas fa-plus"></i>
                             </button>
-                            <button class="btn" style="flex:1;" onclick="askConfirmation(${index})">
-                                Kaufen
+                            <button class="${btnClass}" style="flex:1;" onclick="askConfirmation(${index})" ${btnState}>
+                                ${buyText}
                             </button>
                         </div>
                     </div>
-                `;
+                  `;
                 container.insertAdjacentHTML('beforeend', html);
             });
         }
 
         // --- CART LOGIC ---
         window.addToCart = (index) => {
+            if(globalStockData[index] === false) return; // Security Check
+
             const item = ITEMS[index];
             const qtyInput = document.getElementById(`qty-${index}`);
             const qty = parseInt(qtyInput.value);
             
             if(qty < 1) return alert("Menge muss mind. 1 sein");
-
             cart.push({
+                index: index, // Store index for stock checks
                 name: item.name,
                 singlePrice: item.price,
                 qty: qty,
@@ -783,6 +878,12 @@
             if(cart.length > 0) badge.classList.remove("hidden");
             else badge.classList.add("hidden");
         }
+        
+        // Ensure items in cart are valid when stock changes
+        function updateCartWithStock() {
+            // Optional: Remove items or just mark them? For now, we will disable checkout if any item is out of stock.
+            // This is handled in renderCartList visually.
+        }
 
         window.openCart = () => {
             document.getElementById("cart-modal").classList.remove("hidden");
@@ -791,24 +892,46 @@
 
         function renderCartList() {
             const list = document.getElementById("cart-items-list");
+            const checkoutBtn = document.getElementById("cart-checkout-btn");
             list.innerHTML = "";
             let fullTotal = 0;
+            let allInStock = true;
 
             if(cart.length === 0) {
                 list.innerHTML = "<div style='text-align:center; opacity:0.5'>Warenkorb leer</div>";
+                checkoutBtn.classList.add("btn-disabled");
+                checkoutBtn.disabled = true;
             } else {
                 cart.forEach((item, idx) => {
+                    // Check Stock
+                    const inStock = globalStockData[item.index] !== false;
+                    if(!inStock) allInStock = false;
+                    
                     fullTotal += item.totalPrice;
+                    
+                    const stockMsg = inStock ? "" : "<span style='color:#ed4245; font-weight:bold; font-size:0.8rem; display:block;'>NICHT AUF LAGER</span>";
+
                     list.innerHTML += `
-                        <div class="cart-item-row">
-                            <div>
+                        <div class="list-item-row" style="${!inStock ? 'opacity:0.6;' : ''}">
+                             <div>
                                 <b>${item.name}</b> (x${item.qty})<br>
                                 <span style="color:#faa61a">${item.totalPrice.toLocaleString()} €</span>
-                            </div>
+                                ${stockMsg}
+                             </div>
                             <i class="fas fa-trash" style="color:#ed4245; cursor:pointer;" onclick="removeFromCart(${idx})"></i>
                         </div>
                     `;
                 });
+                
+                if(allInStock) {
+                    checkoutBtn.classList.remove("btn-disabled");
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.innerHTML = "Alles Kaufen";
+                } else {
+                    checkoutBtn.classList.add("btn-disabled");
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.innerHTML = "Artikel nicht verfügbar";
+                }
             }
             document.getElementById("cart-total-display").innerText = fullTotal.toLocaleString() + " €";
         }
@@ -821,17 +944,25 @@
 
         window.checkoutCart = () => {
             if(cart.length === 0) return;
-
             let summaryText = "";
             let fullPrice = 0;
+            
+            // Build summary string AND detailed array for history
+            let cartDetails = [];
             
             cart.forEach(c => {
                 summaryText += `${c.name} (x${c.qty}), `;
                 fullPrice += c.totalPrice;
+                cartDetails.push({
+                    name: c.name,
+                    qty: c.qty,
+                    price: c.singlePrice
+                });
             });
-            
             summaryText = summaryText.slice(0, -2);
-            startTrade(summaryText, fullPrice);
+            
+            // Send details array too
+            startTrade(summaryText, fullPrice, cartDetails);
             cart = []; 
             updateCartBadge();
             document.getElementById("cart-modal").classList.add("hidden");
@@ -839,17 +970,19 @@
 
         // --- DIRECT BUY LOGIC ---
         window.askConfirmation = (index) => {
+             if(globalStockData[index] === false) return;
+             
             const item = ITEMS[index];
             const qty = parseInt(document.getElementById(`qty-${index}`).value);
             if(qty < 1) return alert("Ungültige Menge");
             
             const total = item.price * qty;
-            
             document.getElementById("confirm-text").innerText = `Möchtest du ${qty}x "${item.name}" für ${total.toLocaleString()} € wirklich kaufen?`;
             document.getElementById("confirm-modal").classList.remove("hidden");
-            
             document.getElementById("confirm-btn-action").onclick = () => {
-                startTrade(`${item.name} (x${qty})`, total);
+                // Single item detail for history
+                const details = [{ name: item.name, qty: qty, price: item.price }];
+                startTrade(`${item.name} (x${qty})`, total, details);
                 closeConfirm();
             };
         };
@@ -857,19 +990,20 @@
         window.closeConfirm = () => document.getElementById("confirm-modal").classList.add("hidden");
 
         // --- CHAT SYSTEM ---
-        async function startTrade(itemName, itemPrice) {
+        async function startTrade(itemName, itemPrice, detailsArray) {
             const chatRef = push(ref(db, 'chats'));
             const chatId = chatRef.key;
             const snap = await get(ref(db, 'users/' + currentUser.uid));
             const username = snap.val().username;
-
+            
             await set(chatRef, {
                 buyerId: currentUser.uid,
                 buyerName: username,
                 product: itemName, 
                 price: itemPrice,
                 status: 'active',
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                historyDetails: detailsArray || [] // Store details for later
             });
 
             push(ref(db, `chats/${chatId}/messages`), {
@@ -877,7 +1011,6 @@
                 text: `🛒 **NEUER KAUF**\nUser: ${username}\nItems: ${itemName}\nGesamt: ${itemPrice.toLocaleString()}€`,
                 isSystem: true
             });
-
             openChat(chatId);
         }
 
@@ -916,7 +1049,7 @@
                 } else {
                     document.getElementById("admin-chat-actions").classList.add("hidden");
                 }
-            });
+             });
         };
 
         window.sendMessage = async () => {
@@ -988,7 +1121,55 @@
             }
         };
 
-        // --- ADMIN PANEL & USER MANAGEMENT ---
+        // --- ADMIN: PRODUKTE VERWALTEN (NEU) ---
+        let localStockEdit = {}; // Temporary holding for UI
+        
+        window.openProductManager = () => {
+            localStockEdit = {...globalStockData}; // Copy current state
+            document.getElementById("product-manager-modal").classList.remove("hidden");
+            renderProductManagerList();
+        };
+
+        function renderProductManagerList() {
+            const list = document.getElementById("product-manage-list");
+            list.innerHTML = "";
+            
+            ITEMS.forEach((item, index) => {
+                // Default true if undefined
+                const inStock = localStockEdit[index] !== false;
+                
+                const btnColor = inStock ? '#3ba55c' : '#ed4245';
+                const btnText = inStock ? 'Auf Lager' : 'Nicht auf Lager';
+                
+                const div = document.createElement("div");
+                div.className = "product-manage-row";
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <i class="fas ${item.icon}" style="color:var(--secondary); width:20px;"></i>
+                        <span>${item.name}</span>
+                    </div>
+                    <button class="btn" style="background:${btnColor}; padding: 5px 10px; font-size: 0.8rem; width:120px; box-shadow:none;" onclick="toggleStockStatus(${index})">
+                        ${btnText}
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+            // Bottom Save Button already in HTML
+        }
+
+        window.toggleStockStatus = (index) => {
+            const current = localStockEdit[index] !== false;
+            localStockEdit[index] = !current;
+            renderProductManagerList();
+        };
+
+        window.saveStockSettings = async () => {
+            await set(ref(db, 'stock'), localStockEdit);
+            alert("Produktstatus gespeichert!");
+            document.getElementById("product-manager-modal").classList.add("hidden");
+        };
+
+        // --- ADMIN: USER MANAGEMENT ---
         let targetUserUid = null;
         window.openUserManager = () => {
             document.getElementById("user-manager-modal").classList.remove("hidden");
@@ -1004,7 +1185,6 @@
             const users = snap.val();
             let foundUid = null;
             let foundData = null;
-
             if(users) {
                 Object.entries(users).forEach(([uid, data]) => {
                     if(data.username.toLowerCase() === name.toLowerCase()) {
@@ -1019,15 +1199,18 @@
                 document.getElementById("user-manage-actions").classList.remove("hidden");
                 document.getElementById("manage-target-name").innerText = foundData.username;
                 document.getElementById("manage-target-uid").innerText = "ID: " + foundUid;
-
+                
+                const statusBadge = document.getElementById("ban-status-badge");
                 if(foundData.banned) {
-                    document.getElementById("ban-status-text").innerText = "Status: GESPERRT";
-                    document.getElementById("ban-status-text").style.color = "#ed4245";
+                    statusBadge.innerText = "GESPERRT";
+                    statusBadge.style.background = "#ed4245";
+                    statusBadge.style.color = "white";
                     document.getElementById("ban-buttons-container").classList.add("hidden");
                     document.getElementById("btn-unban-action").classList.remove("hidden");
                 } else {
-                    document.getElementById("ban-status-text").innerText = "Status: Normal";
-                    document.getElementById("ban-status-text").style.color = "#3ba55c";
+                    statusBadge.innerText = "AKTIV";
+                    statusBadge.style.background = "#3ba55c";
+                    statusBadge.style.color = "white";
                     document.getElementById("ban-buttons-container").classList.remove("hidden");
                     document.getElementById("btn-unban-action").classList.add("hidden");
                 }
@@ -1043,7 +1226,6 @@
             const msg = document.getElementById("admin-notif-msg").value;
             
             if(!title || !msg) return alert("Titel und Text eingeben.");
-
             await push(ref(db, `users/${targetUserUid}/inbox`), {
                 title: title,
                 message: msg,
@@ -1062,13 +1244,11 @@
             document.getElementById("user-manager-modal").classList.add("hidden");
         };
 
-        // --- NEUE FUNKTION: 24H BAN ---
         window.banUser24hAction = async () => {
             if(!targetUserUid) return;
             if(!confirm("User für 24 Stunden sperren?")) return;
 
             const expiration = Date.now() + (24 * 60 * 60 * 1000); // 24 Stunden ab jetzt
-            
             await update(ref(db, `users/${targetUserUid}`), { 
                 banned: true,
                 banExpires: expiration
@@ -1108,22 +1288,32 @@
             });
         }
 
+        // --- KAUF ABWICKLUNG & HISTORY SAVING ---
         window.confirmPurchase = async () => {
             const chatSnap = await get(ref(db, `chats/${currentChatId}`));
             const chatData = chatSnap.val();
             const userRef = ref(db, `users/${chatData.buyerId}`);
             const userSnap = await get(userRef);
-            
             const newSpent = (userSnap.val().spent || 0) + chatData.price;
 
+            // 1. Update Spent
             await update(userRef, { spent: newSpent });
+            
+            // 2. Add to History
+            await push(ref(db, `users/${chatData.buyerId}/history`), {
+                items: chatData.historyDetails || [{name: chatData.product, qty: 1, price: chatData.price}],
+                total: chatData.price,
+                timestamp: Date.now()
+            });
 
+            // 3. Notify User
             await push(ref(db, `users/${chatData.buyerId}/inbox`), {
                 title: "Kauf Erfolgreich! ✅",
                 message: `Du hast erhalten:\n${chatData.product}`,
                 timestamp: Date.now()
             });
 
+            // 4. Remove Chat
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
         };
@@ -1137,11 +1327,65 @@
                 message: `Kauf storniert:\n${chatData.product}`,
                 timestamp: Date.now()
             });
-
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
         };
 
+        // --- KAUFVERLAUF (HISTORY) ---
+        window.openHistory = () => {
+            document.getElementById("profile-modal").classList.add("hidden"); // Close Profile
+            document.getElementById("history-modal").classList.remove("hidden");
+            
+            const list = document.getElementById("history-list");
+            list.innerHTML = "<div style='text-align:center'>Lade...</div>";
+            
+            onValue(ref(db, `users/${currentUser.uid}/history`), (snapshot) => {
+                const history = snapshot.val();
+                list.innerHTML = "";
+                
+                if(!history) {
+                    list.innerHTML = "<div style='text-align:center; opacity:0.5'>Noch keine Käufe</div>";
+                    return;
+                }
+                
+                // Sort by new
+                Object.values(history).reverse().forEach(entry => {
+                    const date = new Date(entry.timestamp).toLocaleString();
+                    
+                    // Build Items Table
+                    let itemsHtml = "";
+                    if(entry.items && Array.isArray(entry.items)) {
+                        entry.items.forEach(itm => {
+                            itemsHtml += `
+                                <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:5px; padding-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <span>${itm.name} <span style="opacity:0.6;">(x${itm.qty})</span></span>
+                                    <span>${(itm.price * itm.qty).toLocaleString()}€</span>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    const div = document.createElement("div");
+                    div.className = "embed-msg";
+                    div.style.marginBottom = "15px";
+                    div.style.background = "#202225";
+                    div.style.borderLeftColor = "#3ba55c";
+                    
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <small style="opacity:0.5">${date}</small>
+                            <span style="color:#faa61a; font-weight:bold;">Gesamt: ${entry.total.toLocaleString()} €</span>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:4px;">
+                            ${itemsHtml}
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }, { onlyOnce: true });
+        };
+
+        // --- INBOX ---
         window.openInbox = () => {
             document.getElementById("inbox-modal").classList.remove("hidden");
             const list = document.getElementById("inbox-list");
@@ -1157,6 +1401,7 @@
                     div.className = "embed-msg embed-system"; 
                     div.style.marginBottom = "10px";
                     div.style.textAlign = "left";
+    
                     div.innerHTML = `<b>${msg.title}</b><br>${msg.message.replace(/\n/g, '<br>')}<br><small style='opacity:0.5; display:block; margin-top:5px;'>${new Date(msg.timestamp).toLocaleTimeString()}</small>`;
                     list.appendChild(div);
                 });
