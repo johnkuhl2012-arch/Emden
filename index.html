@@ -73,6 +73,7 @@
 
         .btn-danger { background: #ed4245; box-shadow: none; }
         .btn-success { background: #3ba55c; box-shadow: none; }
+        .btn-warning { background: #faa61a; box-shadow: none; color: black; }
         .btn-info { background: #5865F2; box-shadow: none; }
 
         /* --- Auth & Ban Screen --- */
@@ -298,14 +299,32 @@
             justify-content: space-between; align-items: center;
             background: #202225; padding: 10px; margin-bottom: 5px; border-radius: 4px;
         }
+
+        /* --- Timer Style --- */
+        .ban-timer {
+            margin-top: 15px;
+            padding: 10px;
+            background: #202225;
+            border: 1px solid #ed4245;
+            border-radius: 5px;
+            color: #ff9068;
+            font-family: monospace;
+            font-size: 1.5rem;
+        }
     </style>
 </head>
 <body>
 
     <div id="ban-screen" class="hidden" style="background: #000; z-index: 9999; position: fixed; inset: 0;">
         <i class="fas fa-ban" style="font-size: 5rem; color: #ed4245; margin-bottom: 20px;"></i>
-        <h1 style="color: #ed4245;">ACCOUNT PERMANENT GESPERRT</h1>
-        <p>Ein Administrator hat deinen Zugang zu diesem Shop dauerhaft deaktiviert.</p>
+        <h1 style="color: #ed4245;">ACCOUNT GESPERRT</h1>
+        <p id="ban-message">Ein Administrator hat deinen Zugang deaktiviert.</p>
+        
+        <div id="ban-timer-container" class="hidden" style="text-align: center;">
+            <p style="margin-bottom: 5px; opacity: 0.8;">Account wird entsperrt in:</p>
+            <div id="ban-countdown" class="ban-timer">00:00:00</div>
+        </div>
+
         <button class="btn btn-danger" onclick="logout()" style="margin-top: 30px;">Abmelden</button>
     </div>
 
@@ -421,7 +440,12 @@
 
                 <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
                     <p id="ban-status-text">Status: Normal</p>
-                    <button class="btn btn-danger" id="btn-ban-action" onclick="banUserAction()">Account Permanent sperren</button>
+                    
+                    <div id="ban-buttons-container" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button class="btn btn-warning" id="btn-ban-24h" onclick="banUser24hAction()" style="font-size: 0.8rem;">Ban 24h</button>
+                        <button class="btn btn-danger" id="btn-ban-action" onclick="banUserAction()" style="font-size: 0.8rem;">Permanent Ban</button>
+                    </div>
+                    
                     <button class="btn btn-success hidden" id="btn-unban-action" onclick="unbanUserAction()">Account entsperren</button>
                 </div>
             </div>
@@ -520,17 +544,19 @@
             { name: "Stahl", price: 750, icon: "fa-cube" },
             { name: "Lockpick lvl 2", price: 2500, icon: "fa-key" },
             { name: "Mainboard lvl 1", price: 1500, icon: "fa-microchip" },
-            // --- NEUE ITEMS ---
             { name: "Ceramic", price: 1250, icon: "fa-shapes" },
             { name: "Glas Flasche", price: 1000, icon: "fa-wine-bottle" },
             { name: "Kaputte Flasche", price: 500, icon: "fa-wine-glass-empty" },
             { name: "Feuerwerks RPG", price: 100000, icon: "fa-meteor" },
-            { name: "Feuerwerks RPG Munition", price: 15000, icon: "fa-fire" }
+            { name: "Feuerwerks RPG Munition", price: 15000, icon: "fa-fire" },
+            // --- NEUES ITEM ---
+            { name: "Kupfer", price: 7500, icon: "fa-layer-group" }
         ];
 
         let currentUser = null;
         let isRegistering = false;
         let currentChatId = null;
+        let banTimerInterval = null;
         const ADMIN_USERNAME = "Knödel";
         // Warenkorb
         let cart = [];
@@ -567,7 +593,10 @@
             }
         };
 
-        window.logout = () => signOut(auth);
+        window.logout = () => {
+            if(banTimerInterval) clearInterval(banTimerInterval);
+            signOut(auth);
+        };
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -589,21 +618,40 @@
                 if(data) {
                     // BAN CHECK
                     if(data.banned === true) {
+                        
+                        // Check if it is a timed ban
+                        if(data.banExpires) {
+                            const now = Date.now();
+                            if(now >= data.banExpires) {
+                                // Ban abgelaufen -> Auto Unban
+                                update(ref(db, 'users/' + currentUser.uid), { banned: false, banExpires: null });
+                                return;
+                            }
+                            // Timer anzeigen
+                            document.getElementById("ban-timer-container").classList.remove("hidden");
+                            startBanTimer(data.banExpires);
+                        } else {
+                            // Permanent ban
+                            document.getElementById("ban-timer-container").classList.add("hidden");
+                            if(banTimerInterval) clearInterval(banTimerInterval);
+                        }
+
                         document.getElementById("app-screen").classList.add("hidden");
                         document.getElementById("auth-screen").classList.add("hidden");
                         document.getElementById("ban-screen").classList.remove("hidden");
-                        return;
+                        return; // Stop loading app
                     } else {
+                        // User is clean
                         document.getElementById("ban-screen").classList.add("hidden");
                         document.getElementById("auth-screen").classList.add("hidden");
                         document.getElementById("app-screen").classList.remove("hidden");
+                        if(banTimerInterval) clearInterval(banTimerInterval);
                     }
 
                     document.getElementById("profile-name").innerText = data.username;
                     
-                    // PASSWORT VERSTECKEN LOGIK
                     const passEl = document.getElementById("profile-pass");
-                    passEl.innerText = "••••••"; // Standardmäßig versteckt
+                    passEl.innerText = "••••••";
                     passEl.setAttribute("data-realpass", data.password || "Nicht gespeichert");
                     
                     document.getElementById("profile-spent").innerText = (data.spent || 0).toLocaleString() + " €";
@@ -621,6 +669,32 @@
                     listenForMyActiveChats();
                 }
             });
+        }
+
+        function startBanTimer(expiryTimestamp) {
+            if(banTimerInterval) clearInterval(banTimerInterval);
+            
+            const updateTimer = () => {
+                const now = Date.now();
+                const diff = expiryTimestamp - now;
+
+                if(diff <= 0) {
+                    clearInterval(banTimerInterval);
+                    // Trigger DB update to unban (will be handled by onValue above)
+                    update(ref(db, 'users/' + currentUser.uid), { banned: false, banExpires: null });
+                } else {
+                    // Format time
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    document.getElementById("ban-countdown").innerText = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            };
+
+            updateTimer(); // Initial call
+            banTimerInterval = setInterval(updateTimer, 1000);
         }
 
         window.togglePassVisibility = () => {
@@ -944,12 +1018,12 @@
                 if(foundData.banned) {
                     document.getElementById("ban-status-text").innerText = "Status: GESPERRT";
                     document.getElementById("ban-status-text").style.color = "#ed4245";
-                    document.getElementById("btn-ban-action").classList.add("hidden");
+                    document.getElementById("ban-buttons-container").classList.add("hidden");
                     document.getElementById("btn-unban-action").classList.remove("hidden");
                 } else {
                     document.getElementById("ban-status-text").innerText = "Status: Normal";
                     document.getElementById("ban-status-text").style.color = "#3ba55c";
-                    document.getElementById("btn-ban-action").classList.remove("hidden");
+                    document.getElementById("ban-buttons-container").classList.remove("hidden");
                     document.getElementById("btn-unban-action").classList.add("hidden");
                 }
             } else {
@@ -975,16 +1049,32 @@
 
         window.banUserAction = async () => {
             if(!targetUserUid) return;
-            if(!confirm("User wirklich permanent sperren?")) return;
+            if(!confirm("User wirklich PERMANENT sperren?")) return;
             
-            await update(ref(db, `users/${targetUserUid}`), { banned: true });
-            alert("User gesperrt.");
+            // Permanent Ban = banned true, no expiration
+            await update(ref(db, `users/${targetUserUid}`), { banned: true, banExpires: null });
+            alert("User permanent gesperrt.");
+            document.getElementById("user-manager-modal").classList.add("hidden");
+        };
+
+        // --- NEUE FUNKTION: 24H BAN ---
+        window.banUser24hAction = async () => {
+            if(!targetUserUid) return;
+            if(!confirm("User für 24 Stunden sperren?")) return;
+
+            const expiration = Date.now() + (24 * 60 * 60 * 1000); // 24 Stunden ab jetzt
+            
+            await update(ref(db, `users/${targetUserUid}`), { 
+                banned: true,
+                banExpires: expiration
+            });
+            alert("User für 24h gesperrt.");
             document.getElementById("user-manager-modal").classList.add("hidden");
         };
 
         window.unbanUserAction = async () => {
             if(!targetUserUid) return;
-            await update(ref(db, `users/${targetUserUid}`), { banned: false });
+            await update(ref(db, `users/${targetUserUid}`), { banned: false, banExpires: null });
             alert("User entsperrt.");
             document.getElementById("user-manager-modal").classList.add("hidden");
         };
