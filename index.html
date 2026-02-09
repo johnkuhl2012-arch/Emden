@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Knödel's Shop RPG</title>
+    <title>Knödel's Shop</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -294,7 +294,8 @@
 
         /* --- Cart List Style --- */
         .cart-item-row {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex;
+            justify-content: space-between; align-items: center;
             background: #202225; padding: 10px; margin-bottom: 5px; border-radius: 4px;
         }
     </style>
@@ -461,7 +462,11 @@
             <h2 style="margin-top:0;">Account</h2>
             <div style="text-align: left; margin-top: 20px; background: #202225; padding: 15px; border-radius: 5px;">
                 <p><b>User:</b> <span id="profile-name">...</span></p>
-                <p><b>Passwort:</b> <span id="profile-pass" style="background: #000; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #0f0;">...</span></p>
+                <p style="display: flex; align-items: center; gap: 10px;">
+                    <b>Code:</b> 
+                    <span id="profile-pass" style="background: #000; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #0f0;" data-realpass="">••••••</span>
+                    <i class="fas fa-eye" onclick="togglePassVisibility()" style="cursor: pointer; opacity: 0.7;" title="Anzeigen"></i>
+                </p>
                 <hr style="border-color: rgba(255,255,255,0.1);">
                 <p style="font-size: 1.2rem;"><b>Ausgegeben:</b> <span id="profile-spent" style="color: var(--secondary); font-weight: bold;">0€</span></p>
             </div>
@@ -471,8 +476,13 @@
     <div id="inbox-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="chat-header">
-                <span><i class="fas fa-inbox"></i> Postfach</span>
-                <button onclick="document.getElementById('inbox-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span><i class="fas fa-inbox"></i> Postfach</span>
+                </div>
+                <div style="display:flex; gap:10px;">
+                     <button onclick="clearInbox()" title="Postfach leeren" style="background:none;border:none;color:#ed4245;cursor:pointer;"><i class="fas fa-trash"></i></button>
+                    <button onclick="document.getElementById('inbox-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
+                </div>
             </div>
             <div style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;">
                 <div id="inbox-list"></div>
@@ -501,7 +511,7 @@
 
         const ITEMS = [
             { name: "RPG", price: 125000, icon: "fa-rocket" },
-            { name: "RPG Munition", price: 25000, icon: "fa-bomb" }, // NEU
+            { name: "RPG Munition", price: 25000, icon: "fa-bomb" }, 
             { name: "Advanced West", price: 10000, icon: "fa-shield-halved" },
             { name: "Metal", price: 500, icon: "fa-cubes" },
             { name: "Molotov", price: 1000, icon: "fa-fire" },
@@ -509,14 +519,19 @@
             { name: "Helm", price: 7500, icon: "fa-helmet-safety" },
             { name: "Stahl", price: 750, icon: "fa-cube" },
             { name: "Lockpick lvl 2", price: 2500, icon: "fa-key" },
-            { name: "Mainboard lvl 1", price: 1500, icon: "fa-microchip" }
+            { name: "Mainboard lvl 1", price: 1500, icon: "fa-microchip" },
+            // --- NEUE ITEMS ---
+            { name: "Ceramic", price: 1250, icon: "fa-shapes" },
+            { name: "Glas Flasche", price: 1000, icon: "fa-wine-bottle" },
+            { name: "Kaputte Flasche", price: 500, icon: "fa-wine-glass-empty" },
+            { name: "Feuerwerks RPG", price: 100000, icon: "fa-meteor" },
+            { name: "Feuerwerks RPG Munition", price: 15000, icon: "fa-fire" }
         ];
 
         let currentUser = null;
         let isRegistering = false;
         let currentChatId = null;
         const ADMIN_USERNAME = "Knödel";
-        
         // Warenkorb
         let cart = [];
 
@@ -534,6 +549,7 @@
             if(!user || !pass) return alert("Bitte alles ausfüllen!");
             
             const email = user.toLowerCase().replace(/\s/g, '') + "@shop-rpg.local";
+
             if(isRegistering) {
                 createUserWithEmailAndPassword(auth, email, pass)
                     .then((uc) => {
@@ -556,7 +572,6 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                // Check if Banned logic is inside loadUserData
                 loadUserData();
             } else {
                 currentUser = null;
@@ -577,7 +592,7 @@
                         document.getElementById("app-screen").classList.add("hidden");
                         document.getElementById("auth-screen").classList.add("hidden");
                         document.getElementById("ban-screen").classList.remove("hidden");
-                        return; // Stop loading app
+                        return;
                     } else {
                         document.getElementById("ban-screen").classList.add("hidden");
                         document.getElementById("auth-screen").classList.add("hidden");
@@ -585,7 +600,12 @@
                     }
 
                     document.getElementById("profile-name").innerText = data.username;
-                    document.getElementById("profile-pass").innerText = data.password || "Nicht gespeichert";
+                    
+                    // PASSWORT VERSTECKEN LOGIK
+                    const passEl = document.getElementById("profile-pass");
+                    passEl.innerText = "••••••"; // Standardmäßig versteckt
+                    passEl.setAttribute("data-realpass", data.password || "Nicht gespeichert");
+                    
                     document.getElementById("profile-spent").innerText = (data.spent || 0).toLocaleString() + " €";
                     
                     if(data.inbox) {
@@ -603,10 +623,20 @@
             });
         }
 
+        window.togglePassVisibility = () => {
+            const el = document.getElementById("profile-pass");
+            const real = el.getAttribute("data-realpass");
+            if(el.innerText === "••••••") {
+                el.innerText = real;
+            } else {
+                el.innerText = "••••••";
+            }
+        };
+
         function checkIfAdmin(username) {
             if(username === ADMIN_USERNAME) {
                 document.getElementById("admin-panel").classList.remove("hidden");
-                document.getElementById("admin-user-btn").classList.remove("hidden"); // User Manager Button
+                document.getElementById("admin-user-btn").classList.remove("hidden"); 
                 listenForAdminChats();
             } else {
                 document.getElementById("admin-panel").classList.add("hidden");
@@ -661,10 +691,8 @@
                 qty: qty,
                 totalPrice: item.price * qty
             });
-            
             updateCartBadge();
             
-            // Kleiner Effekt
             const btn = document.querySelectorAll('.cart-btn')[index];
             btn.style.color = "#3ba55c";
             setTimeout(() => btn.style.color = "var(--secondary)", 500);
@@ -714,7 +742,7 @@
 
         window.checkoutCart = () => {
             if(cart.length === 0) return;
-            
+
             let summaryText = "";
             let fullPrice = 0;
             
@@ -723,12 +751,9 @@
                 fullPrice += c.totalPrice;
             });
             
-            // Remove trailing comma
             summaryText = summaryText.slice(0, -2);
-            
-            // Use generic buy logic but with cart data
             startTrade(summaryText, fullPrice);
-            cart = []; // Empty cart
+            cart = []; 
             updateCartBadge();
             document.getElementById("cart-modal").classList.add("hidden");
         };
@@ -740,7 +765,7 @@
             if(qty < 1) return alert("Ungültige Menge");
             
             const total = item.price * qty;
-
+            
             document.getElementById("confirm-text").innerText = `Möchtest du ${qty}x "${item.name}" für ${total.toLocaleString()} € wirklich kaufen?`;
             document.getElementById("confirm-modal").classList.remove("hidden");
             
@@ -762,7 +787,7 @@
             await set(chatRef, {
                 buyerId: currentUser.uid,
                 buyerName: username,
-                product: itemName, // Enthält jetzt Menge oder Liste
+                product: itemName, 
                 price: itemPrice,
                 status: 'active',
                 timestamp: Date.now()
@@ -773,15 +798,15 @@
                 text: `🛒 **NEUER KAUF**\nUser: ${username}\nItems: ${itemName}\nGesamt: ${itemPrice.toLocaleString()}€`,
                 isSystem: true
             });
+
             openChat(chatId);
         }
 
         window.openChat = (chatId) => {
             currentChatId = chatId;
-            // Close other modals if open
             document.getElementById("my-chats-modal").classList.add("hidden");
             document.getElementById("chat-modal").classList.remove("hidden");
-            
+
             onValue(ref(db, `chats/${chatId}/messages`), (snapshot) => {
                 const msgs = snapshot.val();
                 const container = document.getElementById("chat-messages");
@@ -805,6 +830,7 @@
                     container.scrollTop = container.scrollHeight;
                 }
             });
+
             get(ref(db, 'users/' + currentUser.uid)).then(snap => {
                 if(snap.val().username === ADMIN_USERNAME) {
                     document.getElementById("admin-chat-actions").classList.remove("hidden");
@@ -836,7 +862,6 @@
 
         // --- AKTIVE CHATS USER (LISTE) ---
         let myActiveChats = {};
-
         function listenForMyActiveChats() {
             onValue(ref(db, 'chats'), (snapshot) => {
                 const chats = snapshot.val();
@@ -865,10 +890,8 @@
         window.showMyActiveChats = () => {
             const keys = Object.keys(myActiveChats);
             if(keys.length === 1) {
-                // Wenn nur einer, direkt öffnen
                 openChat(keys[0]);
             } else {
-                // Liste anzeigen
                 const list = document.getElementById("my-chats-list");
                 list.innerHTML = "";
                 keys.forEach(id => {
@@ -888,7 +911,6 @@
 
         // --- ADMIN PANEL & USER MANAGEMENT ---
         let targetUserUid = null;
-
         window.openUserManager = () => {
             document.getElementById("user-manager-modal").classList.remove("hidden");
             document.getElementById("user-manage-actions").classList.add("hidden");
@@ -918,8 +940,7 @@
                 document.getElementById("user-manage-actions").classList.remove("hidden");
                 document.getElementById("manage-target-name").innerText = foundData.username;
                 document.getElementById("manage-target-uid").innerText = "ID: " + foundUid;
-                
-                // Ban Buttons logic
+
                 if(foundData.banned) {
                     document.getElementById("ban-status-text").innerText = "Status: GESPERRT";
                     document.getElementById("ban-status-text").style.color = "#ed4245";
@@ -981,7 +1002,7 @@
                             btn.className = "btn";
                             btn.style.fontSize = "0.8rem";
                             btn.style.background = "#202225";
-                            // Shorten product name if too long
+                            
                             const prodName = data.product.length > 20 ? data.product.substring(0, 18)+"..." : data.product;
                             btn.innerHTML = `🛒 ${data.buyerName}<br><small>${prodName}</small>`;
                             btn.onclick = () => openChat(id);
@@ -997,14 +1018,17 @@
             const chatData = chatSnap.val();
             const userRef = ref(db, `users/${chatData.buyerId}`);
             const userSnap = await get(userRef);
+            
             const newSpent = (userSnap.val().spent || 0) + chatData.price;
 
             await update(userRef, { spent: newSpent });
+
             await push(ref(db, `users/${chatData.buyerId}/inbox`), {
                 title: "Kauf Erfolgreich! ✅",
                 message: `Du hast erhalten:\n${chatData.product}`,
                 timestamp: Date.now()
             });
+
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
         };
@@ -1018,6 +1042,7 @@
                 message: `Kauf storniert:\n${chatData.product}`,
                 timestamp: Date.now()
             });
+
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
         };
@@ -1041,6 +1066,11 @@
                     list.appendChild(div);
                 });
             });
+        };
+
+        window.clearInbox = async () => {
+            if(!confirm("Möchtest du wirklich alle Nachrichten löschen?")) return;
+            await remove(ref(db, `users/${currentUser.uid}/inbox`));
         };
         
         window.openProfile = () => document.getElementById("profile-modal").classList.remove("hidden");
