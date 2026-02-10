@@ -119,48 +119,8 @@
             color: white;
             font-size: 1rem;
             transition: 0.3s;
-            box-sizing: border-box; 
         }
         input:focus, textarea:focus { border-color: var(--secondary); }
-        
-        /* Checkbox Switch Style */
-        .switch-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #202225;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            text-align: left;
-        }
-        /* Custom Toggle Switch CSS */
-        .switch {
-          position: relative;
-          display: inline-block;
-          width: 50px;
-          height: 24px;
-        }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background-color: #ccc;
-          transition: .4s;
-          border-radius: 34px;
-        }
-        .slider:before {
-          position: absolute;
-          content: "";
-          height: 16px; width: 16px;
-          left: 4px; bottom: 4px;
-          background-color: white;
-          transition: .4s;
-          border-radius: 50%;
-        }
-        input:checked + .slider { background-color: var(--secondary); }
-        input:checked + .slider:before { transform: translateX(26px); }
 
         /* --- Navbar --- */
         nav {
@@ -225,6 +185,7 @@
         
         .item-card:hover { transform: translateY(-5px); background: #36393f; }
         
+        /* Grauschleier für Out of Stock Items */
         .item-card.out-of-stock {
             border-left-color: #555;
             opacity: 0.8;
@@ -502,7 +463,8 @@
                 <span><i class="fas fa-boxes"></i> Produkte verwalten</span>
                 <button onclick="document.getElementById('product-manager-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
             </div>
-            <div id="product-manage-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;"></div>
+            <div id="product-manage-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;">
+                </div>
             <div style="padding: 20px; background: #2f3136; text-align: center;">
                 <button class="btn btn-info" onclick="saveStockSettings()">Speichern & Aktualisieren</button>
             </div>
@@ -536,10 +498,9 @@
                 <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
                 
                 <h4 style="margin: 0 0 10px; font-size: 1rem;"><i class="fas fa-paper-plane"></i> Nachricht senden</h4>
-                
-                <input type="text" id="admin-notif-title" placeholder="Betreff..." style="background: #18191c; border: 1px solid #444; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
-                <textarea id="admin-notif-msg" placeholder="Nachricht..." rows="2" style="background: #18191c; border: 1px solid #444; margin-bottom: 8px; width: 100%; box-sizing: border-box; resize: vertical;"></textarea>
-                <button class="btn" style="font-size: 0.9rem; width: 100%; box-sizing: border-box;" onclick="sendAdminNotification()">Absenden</button>
+                <input type="text" id="admin-notif-title" placeholder="Betreff..." style="background: #18191c; border: 1px solid #444; margin-bottom: 8px;">
+                <textarea id="admin-notif-msg" placeholder="Nachricht..." rows="2" style="background: #18191c; border: 1px solid #444; margin-bottom: 8px;"></textarea>
+                <button class="btn" style="font-size: 0.9rem; width: 100%;" onclick="sendAdminNotification()">Absenden</button>
 
                 <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
 
@@ -570,7 +531,8 @@
                 <span><i class="fas fa-history"></i> Dein Kaufverlauf</span>
                 <button onclick="document.getElementById('history-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
             </div>
-            <div id="history-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;"></div>
+            <div id="history-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;">
+                </div>
         </div>
     </div>
 
@@ -580,7 +542,8 @@
                 <span><i class="fas fa-shopping-basket"></i> Dein Warenkorb</span>
                 <button onclick="document.getElementById('cart-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
             </div>
-            <div style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;" id="cart-items-list"></div>
+            <div style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;" id="cart-items-list">
+                </div>
             <div style="padding: 20px; background: #2f3136; border-top: 1px solid #202225;">
                 <div style="display:flex; justify-content:space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px;">
                     <span>Gesamt:</span>
@@ -603,80 +566,10 @@
                     <i class="fas fa-eye" onclick="togglePassVisibility()" style="cursor: pointer; opacity: 0.7;" title="Anzeigen"></i>
                 </p>
                 <hr style="border-color: rgba(255,255,255,0.1);">
-                
-                <div id="email-section-loading">Lade Email...</div>
-                
-                <div id="email-section-add" class="hidden">
-                    <p style="font-size: 0.9rem; margin-bottom: 5px;">Email verknüpfen (Optional):</p>
-                    <div style="display: flex; gap: 5px;">
-                        <input type="email" id="input-link-email" placeholder="deine@email.com" style="margin:0; padding: 8px;">
-                        <button class="btn btn-success" style="width: auto; padding: 8px 15px;" onclick="linkUserEmail()"><i class="fas fa-check"></i></button>
-                    </div>
-                </div>
-
-                <div id="email-section-manage" class="hidden" style="margin-top: 10px;">
-                    <p style="margin-bottom: 5px;"><b>Email:</b> <span id="display-email" style="opacity: 0.8;">...</span></p>
-                    <button class="btn btn-info" onclick="openEmailSettings()" style="width: 100%; font-size: 0.9rem; margin-top: 5px;">
-                        <i class="fas fa-cog"></i> Benachrichtigungen
-                    </button>
-                </div>
-                
-                <hr style="border-color: rgba(255,255,255,0.1);">
                 <p style="font-size: 1.2rem;"><b>Ausgegeben:</b> <span id="profile-spent" style="color: var(--secondary); font-weight: bold;">0€</span></p>
             </div>
             <button class="btn" style="margin-top: 20px; background: #40444b; width: 100%;" onclick="openHistory()">
                 <i class="fas fa-history"></i> Kaufverlauf ansehen
-            </button>
-        </div>
-    </div>
-
-    <div id="email-settings-modal" class="modal-overlay hidden">
-        <div class="auth-box" style="border-color: #5865F2;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-                <h3 style="margin:0;">Email Einstellungen</h3>
-                <i class="fas fa-times" style="cursor:pointer;" onclick="document.getElementById('email-settings-modal').classList.add('hidden')"></i>
-            </div>
-            
-            <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 15px;">Sende mir eine Email wenn:</p>
-            
-            <div class="switch-row">
-                <span>Neues Item im Stock</span>
-                <label class="switch">
-                    <input type="checkbox" id="check-stock-new">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            
-            <div class="switch-row">
-                <span>Item Out of Stock</span>
-                <label class="switch">
-                    <input type="checkbox" id="check-stock-out">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            
-            <div class="switch-row">
-                <span>Neue Nachricht im Postfach</span>
-                <label class="switch">
-                    <input type="checkbox" id="check-inbox">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="switch-row">
-                <span>Ticket Updates</span>
-                <label class="switch">
-                    <input type="checkbox" id="check-tickets">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <button class="btn btn-success" onclick="saveEmailPreferences()" style="margin-top: 15px;">Speichern</button>
-            
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
-            
-            <button class="btn btn-danger" onclick="deleteLinkedEmail()" style="font-size: 0.9rem; background: transparent; border: 1px solid #ed4245; color: #ed4245;">
-                <i class="fas fa-trash"></i> Email & Daten löschen
             </button>
         </div>
     </div>
@@ -725,6 +618,7 @@
             { name: "West", price: 2500, icon: "fa-shield-halved" },
             { name: "Metal", price: 500, icon: "fa-cubes" },
             { name: "Molotov", price: 1000, icon: "fa-fire" },
+            // Titanium Icon changed to fa-layer-group
             { name: "Titanium", price: 1500, icon: "fa-layer-group" },
             { name: "Cloth", price: 750, icon: "fa-shirt" },
             { name: "Helm", price: 3500, icon: "fa-helmet-safety" },
@@ -740,6 +634,7 @@
             { name: "Feuerwerks RPG", price: 75000, icon: "fa-meteor" },
             { name: "Feuerwerks RPG Munition", price: 10000, icon: "fa-fire" },
         ];
+        
         let currentUser = null;
         let isRegistering = false;
         let currentChatId = null;
@@ -747,9 +642,10 @@
         const ADMIN_USERNAME = "Knödel";
         // Warenkorb
         let cart = [];
+        
         // Stock Status (lokal)
         let globalStockData = {};
-        
+
         // --- AUTH ---
         window.toggleAuthMode = () => {
             isRegistering = !isRegistering;
@@ -806,15 +702,19 @@
                 if(data) {
                     // BAN CHECK
                     if(data.banned === true) {
+                        // Check if it is a timed ban
                         if(data.banExpires) {
                             const now = Date.now();
                             if(now >= data.banExpires) {
+                                // Ban abgelaufen -> Auto Unban
                                 update(ref(db, 'users/' + currentUser.uid), { banned: false, banExpires: null });
                                 return;
                             }
+                            // Timer anzeigen
                             document.getElementById("ban-timer-container").classList.remove("hidden");
                             startBanTimer(data.banExpires);
                         } else {
+                            // Permanent ban
                             document.getElementById("ban-timer-container").classList.add("hidden");
                             if(banTimerInterval) clearInterval(banTimerInterval);
                         }
@@ -824,6 +724,7 @@
                         document.getElementById("ban-screen").classList.remove("hidden");
                         return; // Stop loading app
                     } else {
+                        // User is clean
                         document.getElementById("ban-screen").classList.add("hidden");
                         document.getElementById("auth-screen").classList.add("hidden");
                         document.getElementById("app-screen").classList.remove("hidden");
@@ -845,88 +746,19 @@
                         document.getElementById("inbox-badge").classList.add("hidden");
                     }
 
-                    // --- EMAIL UI LOGIC ---
-                    const loadDiv = document.getElementById("email-section-loading");
-                    const addDiv = document.getElementById("email-section-add");
-                    const manageDiv = document.getElementById("email-section-manage");
-                    
-                    loadDiv.classList.add("hidden");
-                    
-                    if(data.contactEmail) {
-                        addDiv.classList.add("hidden");
-                        manageDiv.classList.remove("hidden");
-                        document.getElementById("display-email").innerText = data.contactEmail;
-                    } else {
-                        addDiv.classList.remove("hidden");
-                        manageDiv.classList.add("hidden");
-                    }
-
+                    // Listen to Stock updates first, then render shop
                     listenToStockUpdates(data.username);
                     listenForMyActiveChats();
                 }
             });
         }
 
-        // --- EMAIL FUNCTIONS ---
-        window.linkUserEmail = async () => {
-            const email = document.getElementById("input-link-email").value.trim();
-            if(!email || !email.includes("@")) return alert("Ungültige Email!");
-            
-            await update(ref(db, 'users/' + currentUser.uid), {
-                contactEmail: email,
-                emailSettings: { stockNew: true, stockOut: true, inbox: true, tickets: true }
-            });
-            alert("Email verknüpft!");
-            document.getElementById("input-link-email").value = "";
-        };
-
-        window.openEmailSettings = async () => {
-            document.getElementById("profile-modal").classList.add("hidden");
-            document.getElementById("email-settings-modal").classList.remove("hidden");
-            
-            // Einstellungen laden
-            const snap = await get(ref(db, 'users/' + currentUser.uid + '/emailSettings'));
-            const settings = snap.val() || {};
-            
-            document.getElementById("check-stock-new").checked = settings.stockNew || false;
-            document.getElementById("check-stock-out").checked = settings.stockOut || false;
-            document.getElementById("check-inbox").checked = settings.inbox || false;
-            document.getElementById("check-tickets").checked = settings.tickets || false;
-        };
-
-        window.saveEmailPreferences = async () => {
-            const stockNew = document.getElementById("check-stock-new").checked;
-            const stockOut = document.getElementById("check-stock-out").checked;
-            const inbox = document.getElementById("check-inbox").checked;
-            const tickets = document.getElementById("check-tickets").checked;
-
-            await update(ref(db, 'users/' + currentUser.uid + '/emailSettings'), {
-                stockNew: stockNew,
-                stockOut: stockOut,
-                inbox: inbox,
-                tickets: tickets
-            });
-            alert("Einstellungen gespeichert!");
-            document.getElementById("email-settings-modal").classList.add("hidden");
-        };
-
-        window.deleteLinkedEmail = async () => {
-            if(!confirm("Möchtest du deine Email wirklich entfernen? Du erhältst keine Benachrichtigungen mehr.")) return;
-            
-            await update(ref(db, 'users/' + currentUser.uid), {
-                contactEmail: null,
-                emailSettings: null
-            });
-            alert("Email entfernt.");
-            document.getElementById("email-settings-modal").classList.add("hidden");
-        };
-
         function listenToStockUpdates(username) {
             onValue(ref(db, 'stock'), (snapshot) => {
                 globalStockData = snapshot.val() || {};
-                renderShop();
-                updateCartWithStock();
-                checkIfAdmin(username);
+                renderShop(); // Re-render Shop when stock changes
+                updateCartWithStock(); // Check if cart items are still valid
+                checkIfAdmin(username); // Call this inside to ensure elements exist
             });
         }
 
@@ -938,8 +770,10 @@
 
                 if(diff <= 0) {
                     clearInterval(banTimerInterval);
+                    // Trigger DB update to unban (will be handled by onValue above)
                     update(ref(db, 'users/' + currentUser.uid), { banned: false, banExpires: null });
                 } else {
+                    // Format time
                     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
@@ -947,7 +781,9 @@
                         `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
             };
+
             updateTimer();
+            // Initial call
             banTimerInterval = setInterval(updateTimer, 1000);
         }
 
@@ -978,6 +814,7 @@
             container.innerHTML = "";
             ITEMS.forEach((item, index) => {
                 const delay = index * 0.05;
+                // Stock Check (undefined means In Stock by default)
                 const inStock = globalStockData[index] !== false; 
                 
                 const btnState = inStock ? '' : 'disabled';
@@ -989,7 +826,7 @@
                     <div class="${cardClass}" style="animation-delay: ${delay}s">
                         <div>
                              <i class="fas ${item.icon} item-icon"></i>
-                             <div class="item-name">${item.name}</div>
+                            <div class="item-name">${item.name}</div>
                             <div class="price">${item.price.toLocaleString()} €</div>
                         </div>
                         
@@ -1014,14 +851,15 @@
 
         // --- CART LOGIC ---
         window.addToCart = (index) => {
-            if(globalStockData[index] === false) return;
+            if(globalStockData[index] === false) return; // Security Check
+
             const item = ITEMS[index];
             const qtyInput = document.getElementById(`qty-${index}`);
             const qty = parseInt(qtyInput.value);
             
             if(qty < 1) return alert("Menge muss mind. 1 sein");
             cart.push({
-                index: index, 
+                index: index, // Store index for stock checks
                 name: item.name,
                 singlePrice: item.price,
                 qty: qty,
@@ -1041,7 +879,11 @@
             else badge.classList.add("hidden");
         }
         
-        function updateCartWithStock() {}
+        // Ensure items in cart are valid when stock changes
+        function updateCartWithStock() {
+            // Optional: Remove items or just mark them? For now, we will disable checkout if any item is out of stock.
+            // This is handled in renderCartList visually.
+        }
 
         window.openCart = () => {
             document.getElementById("cart-modal").classList.remove("hidden");
@@ -1054,15 +896,19 @@
             list.innerHTML = "";
             let fullTotal = 0;
             let allInStock = true;
+
             if(cart.length === 0) {
                 list.innerHTML = "<div style='text-align:center; opacity:0.5'>Warenkorb leer</div>";
                 checkoutBtn.classList.add("btn-disabled");
                 checkoutBtn.disabled = true;
             } else {
                 cart.forEach((item, idx) => {
+                    // Check Stock
                     const inStock = globalStockData[item.index] !== false;
                     if(!inStock) allInStock = false;
+                    
                     fullTotal += item.totalPrice;
+                    
                     const stockMsg = inStock ? "" : "<span style='color:#ed4245; font-weight:bold; font-size:0.8rem; display:block;'>NICHT AUF LAGER</span>";
 
                     list.innerHTML += `
@@ -1100,7 +946,10 @@
             if(cart.length === 0) return;
             let summaryText = "";
             let fullPrice = 0;
+            
+            // Build summary string AND detailed array for history
             let cartDetails = [];
+            
             cart.forEach(c => {
                 summaryText += `${c.name} (x${c.qty}), `;
                 fullPrice += c.totalPrice;
@@ -1111,6 +960,8 @@
                 });
             });
             summaryText = summaryText.slice(0, -2);
+            
+            // Send details array too
             startTrade(summaryText, fullPrice, cartDetails);
             cart = []; 
             updateCartBadge();
@@ -1120,6 +971,7 @@
         // --- DIRECT BUY LOGIC ---
         window.askConfirmation = (index) => {
              if(globalStockData[index] === false) return;
+             
             const item = ITEMS[index];
             const qty = parseInt(document.getElementById(`qty-${index}`).value);
             if(qty < 1) return alert("Ungültige Menge");
@@ -1128,6 +980,7 @@
             document.getElementById("confirm-text").innerText = `Möchtest du ${qty}x "${item.name}" für ${total.toLocaleString()} € wirklich kaufen?`;
             document.getElementById("confirm-modal").classList.remove("hidden");
             document.getElementById("confirm-btn-action").onclick = () => {
+                // Single item detail for history
                 const details = [{ name: item.name, qty: qty, price: item.price }];
                 startTrade(`${item.name} (x${qty})`, total, details);
                 closeConfirm();
@@ -1135,12 +988,14 @@
         };
 
         window.closeConfirm = () => document.getElementById("confirm-modal").classList.add("hidden");
+
         // --- CHAT SYSTEM ---
         async function startTrade(itemName, itemPrice, detailsArray) {
             const chatRef = push(ref(db, 'chats'));
             const chatId = chatRef.key;
             const snap = await get(ref(db, 'users/' + currentUser.uid));
             const username = snap.val().username;
+            
             await set(chatRef, {
                 buyerId: currentUser.uid,
                 buyerName: username,
@@ -1148,8 +1003,9 @@
                 price: itemPrice,
                 status: 'active',
                 timestamp: Date.now(),
-                historyDetails: detailsArray || [] 
+                historyDetails: detailsArray || [] // Store details for later
             });
+
             push(ref(db, `chats/${chatId}/messages`), {
                 sender: 'System',
                 text: `🛒 **NEUER KAUF**\nUser: ${username}\nItems: ${itemName}\nGesamt: ${itemPrice.toLocaleString()}€`,
@@ -1186,14 +1042,16 @@
                     container.scrollTop = container.scrollHeight;
                 }
             });
+
             get(ref(db, 'users/' + currentUser.uid)).then(snap => {
                 if(snap.val().username === ADMIN_USERNAME) {
                     document.getElementById("admin-chat-actions").classList.remove("hidden");
                 } else {
                     document.getElementById("admin-chat-actions").classList.add("hidden");
                 }
-            });
+             });
         };
+
         window.sendMessage = async () => {
             const input = document.getElementById("msg-input");
             const text = input.value.trim();
@@ -1262,21 +1120,24 @@
                 document.getElementById("my-chats-modal").classList.remove("hidden");
             }
         };
-        
+
         // --- ADMIN: PRODUKTE VERWALTEN (NEU) ---
-        let localStockEdit = {};
+        let localStockEdit = {}; // Temporary holding for UI
         
         window.openProductManager = () => {
-            localStockEdit = {...globalStockData};
+            localStockEdit = {...globalStockData}; // Copy current state
             document.getElementById("product-manager-modal").classList.remove("hidden");
             renderProductManagerList();
         };
+
         function renderProductManagerList() {
             const list = document.getElementById("product-manage-list");
             list.innerHTML = "";
             
             ITEMS.forEach((item, index) => {
+                // Default true if undefined
                 const inStock = localStockEdit[index] !== false;
+                
                 const btnColor = inStock ? '#3ba55c' : '#ed4245';
                 const btnText = inStock ? 'Auf Lager' : 'Nicht auf Lager';
                 
@@ -1293,6 +1154,7 @@
                 `;
                 list.appendChild(div);
             });
+            // Bottom Save Button already in HTML
         }
 
         window.toggleStockStatus = (index) => {
@@ -1357,6 +1219,7 @@
                 document.getElementById("user-manage-actions").classList.add("hidden");
             }
         };
+
         window.sendAdminNotification = async () => {
             if(!targetUserUid) return;
             const title = document.getElementById("admin-notif-title").value;
@@ -1374,6 +1237,8 @@
         window.banUserAction = async () => {
             if(!targetUserUid) return;
             if(!confirm("User wirklich PERMANENT sperren?")) return;
+            
+            // Permanent Ban = banned true, no expiration
             await update(ref(db, `users/${targetUserUid}`), { banned: true, banExpires: null });
             alert("User permanent gesperrt.");
             document.getElementById("user-manager-modal").classList.add("hidden");
@@ -1382,7 +1247,8 @@
         window.banUser24hAction = async () => {
             if(!targetUserUid) return;
             if(!confirm("User für 24 Stunden sperren?")) return;
-            const expiration = Date.now() + (24 * 60 * 60 * 1000);
+
+            const expiration = Date.now() + (24 * 60 * 60 * 1000); // 24 Stunden ab jetzt
             await update(ref(db, `users/${targetUserUid}`), { 
                 banned: true,
                 banExpires: expiration
@@ -1397,11 +1263,13 @@
             alert("User entsperrt.");
             document.getElementById("user-manager-modal").classList.add("hidden");
         };
+
         function listenForAdminChats() {
             onValue(ref(db, 'chats'), (snapshot) => {
                 const chats = snapshot.val();
                 const list = document.getElementById("active-chats-list");
                 list.innerHTML = "";
+            
                 if(chats) {
                     Object.entries(chats).forEach(([id, data]) => {
                         if(data.status === 'active') {
@@ -1409,6 +1277,7 @@
                             btn.className = "btn";
                             btn.style.fontSize = "0.8rem";
                             btn.style.background = "#202225";
+                            
                             const prodName = data.product.length > 20 ? data.product.substring(0, 18)+"..." : data.product;
                             btn.innerHTML = `🛒 ${data.buyerName}<br><small>${prodName}</small>`;
                             btn.onclick = () => openChat(id);
@@ -1427,20 +1296,28 @@
             const userSnap = await get(userRef);
             const newSpent = (userSnap.val().spent || 0) + chatData.price;
 
+            // 1. Update Spent
             await update(userRef, { spent: newSpent });
+            
+            // 2. Add to History
             await push(ref(db, `users/${chatData.buyerId}/history`), {
                 items: chatData.historyDetails || [{name: chatData.product, qty: 1, price: chatData.price}],
                 total: chatData.price,
                 timestamp: Date.now()
             });
+
+            // 3. Notify User
             await push(ref(db, `users/${chatData.buyerId}/inbox`), {
                 title: "Kauf Erfolgreich! ✅",
                 message: `Du hast erhalten:\n${chatData.product}`,
                 timestamp: Date.now()
             });
+
+            // 4. Remove Chat
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
         };
+
         window.cancelPurchase = async () => {
             const chatSnap = await get(ref(db, `chats/${currentChatId}`));
             const chatData = chatSnap.val();
@@ -1456,20 +1333,26 @@
 
         // --- KAUFVERLAUF (HISTORY) ---
         window.openHistory = () => {
-            document.getElementById("profile-modal").classList.add("hidden");
+            document.getElementById("profile-modal").classList.add("hidden"); // Close Profile
             document.getElementById("history-modal").classList.remove("hidden");
+            
             const list = document.getElementById("history-list");
             list.innerHTML = "<div style='text-align:center'>Lade...</div>";
             
             onValue(ref(db, `users/${currentUser.uid}/history`), (snapshot) => {
                 const history = snapshot.val();
                 list.innerHTML = "";
+                
                 if(!history) {
                     list.innerHTML = "<div style='text-align:center; opacity:0.5'>Noch keine Käufe</div>";
                     return;
                 }
+                
+                // Sort by new
                 Object.values(history).reverse().forEach(entry => {
                     const date = new Date(entry.timestamp).toLocaleString();
+                    
+                    // Build Items Table
                     let itemsHtml = "";
                     if(entry.items && Array.isArray(entry.items)) {
                         entry.items.forEach(itm => {
@@ -1487,6 +1370,7 @@
                     div.style.marginBottom = "15px";
                     div.style.background = "#202225";
                     div.style.borderLeftColor = "#3ba55c";
+                    
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                             <small style="opacity:0.5">${date}</small>
@@ -1517,10 +1401,11 @@
                     div.className = "embed-msg embed-system"; 
                     div.style.marginBottom = "10px";
                     div.style.textAlign = "left";
+    
                     div.innerHTML = `<b>${msg.title}</b><br>${msg.message.replace(/\n/g, '<br>')}<br><small style='opacity:0.5; display:block; margin-top:5px;'>${new Date(msg.timestamp).toLocaleTimeString()}</small>`;
                     list.appendChild(div);
                 });
-            });
+            }); 
         };
 
         window.clearInbox = async () => {
