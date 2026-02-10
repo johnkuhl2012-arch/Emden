@@ -181,20 +181,36 @@
             height: 100%;
             animation: fadeIn 0.6s ease backwards;
             position: relative;
+            overflow: hidden;
         }
         
         .item-card:hover { transform: translateY(-5px); background: #36393f; }
         
-        /* Grauschleier für Out of Stock Items */
         .item-card.out-of-stock {
             border-left-color: #555;
             opacity: 0.8;
         }
         
-        .item-icon { font-size: 3rem; color: var(--secondary); margin-bottom: 15px; }
+        .item-icon { font-size: 3rem; color: var(--secondary); margin-bottom: 15px; margin-top: 15px;}
         .item-name { font-size: 1.3rem; font-weight: 700; margin-bottom: 5px; color: white; }
         .price { font-size: 1.5rem; color: #faa61a; margin: 10px 0 10px; font-weight: bold; }
         
+        /* Lager Anzeige Badge */
+        .stock-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-bottom-left-radius: 8px;
+            box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+        .stock-badge.infinite { background: #3ba55c; color: white; }
+        .stock-badge.limited { background: #faa61a; color: black; }
+        .stock-badge.out { background: #ed4245; color: white; }
+
         .qty-controls {
             display: flex;
             justify-content: center;
@@ -211,10 +227,7 @@
             border: 1px solid #40444b;
         }
         
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
+        .action-buttons { display: flex; gap: 10px; }
         .cart-btn {
             background: #40444b;
             color: var(--secondary);
@@ -226,16 +239,23 @@
             padding: 0;
         }
 
-        /* --- Chat & Embeds --- */
+        /* --- Modals & Embeds --- */
         .modal-overlay {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.85); 
             backdrop-filter: blur(5px);
-            z-index: 100;
+            z-index: 100; /* Standard Modal Z-Index */
             display: flex; 
             justify-content: center; 
             align-items: center;
+        }
+        
+        /* FIX: Höherer Z-Index für Alerts und Bestätigungen 
+           damit sie ÜBER dem Chat (z-index 100) liegen 
+        */
+        #custom-confirm-modal, #custom-alert-modal {
+            z-index: 2000 !important;
         }
 
         .modal-content {
@@ -308,6 +328,7 @@
             max-width: 400px;
             width: 90%;
             text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); /* Starker Schatten für Sichtbarkeit */
         }
 
         /* --- Cart & History List Style --- */
@@ -339,6 +360,21 @@
             margin-bottom: 8px;
             border-radius: 5px;
         }
+
+        .admin-qty-input {
+            width: 70px;
+            padding: 5px;
+            background: #18191c;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .admin-qty-input:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: transparent;
+        }
         
         /* --- Styled User Card --- */
         .user-manage-card {
@@ -352,6 +388,25 @@
     </style>
 </head>
 <body>
+
+    <div id="custom-alert-modal" class="modal-overlay hidden">
+        <div class="confirm-box" style="border-left-color: var(--secondary);">
+            <h2 id="custom-alert-title" style="margin-top: 0; color: var(--secondary);">Hinweis</h2>
+            <p id="custom-alert-text" style="color: #dcddde; margin-bottom: 20px;">Nachricht...</p>
+            <button class="btn" onclick="document.getElementById('custom-alert-modal').classList.add('hidden')" style="width: auto;">Verstanden</button>
+        </div>
+    </div>
+
+    <div id="custom-confirm-modal" class="modal-overlay hidden">
+        <div class="confirm-box">
+            <h2 id="custom-confirm-title" style="margin-top: 0; color: #faa61a;">Bestätigung</h2>
+            <p id="custom-confirm-text" style="color: #dcddde; margin-bottom: 20px;">Bist du sicher?</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-danger" onclick="closeCustomConfirm()" style="width: auto;">Abbrechen</button>
+                <button class="btn btn-success" id="custom-confirm-btn" style="width: auto;">Bestätigen</button>
+            </div>
+        </div>
+    </div>
 
     <div id="ban-screen" class="hidden" style="background: #000; z-index: 9999; position: fixed; inset: 0;">
         <i class="fas fa-ban" style="font-size: 5rem; color: #ed4245; margin-bottom: 20px;"></i>
@@ -446,8 +501,8 @@
             <div id="chat-messages" class="chat-messages"></div>
             
             <div id="admin-chat-actions" class="hidden" style="padding: 10px; background: #2f3136; display: flex; gap: 10px; justify-content: center;">
-                <button class="btn btn-success" style="font-size: 0.8rem; padding: 10px;" onclick="confirmPurchase()">Fertig ✅</button>
-                <button class="btn btn-danger" style="font-size: 0.8rem; padding: 10px;" onclick="cancelPurchase()">Abbruch ❌</button>
+                <button class="btn btn-success" style="font-size: 0.8rem; padding: 10px;" onclick="confirmPurchaseClick()">Fertig ✅</button>
+                <button class="btn btn-danger" style="font-size: 0.8rem; padding: 10px;" onclick="cancelPurchaseClick()">Abbruch ❌</button>
             </div>
 
             <div class="chat-input-area">
@@ -463,8 +518,7 @@
                 <span><i class="fas fa-boxes"></i> Produkte verwalten</span>
                 <button onclick="document.getElementById('product-manager-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
             </div>
-            <div id="product-manage-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;">
-                </div>
+            <div id="product-manage-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;"></div>
             <div style="padding: 20px; background: #2f3136; text-align: center;">
                 <button class="btn btn-info" onclick="saveStockSettings()">Speichern & Aktualisieren</button>
             </div>
@@ -531,8 +585,7 @@
                 <span><i class="fas fa-history"></i> Dein Kaufverlauf</span>
                 <button onclick="document.getElementById('history-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
             </div>
-            <div id="history-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;">
-                </div>
+            <div id="history-list" style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;"></div>
         </div>
     </div>
 
@@ -542,8 +595,7 @@
                 <span><i class="fas fa-shopping-basket"></i> Dein Warenkorb</span>
                 <button onclick="document.getElementById('cart-modal').classList.add('hidden')" style="background:none;border:none;color:white;cursor:pointer;"><i class="fas fa-times"></i></button>
             </div>
-            <div style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;" id="cart-items-list">
-                </div>
+            <div style="padding: 20px; overflow-y: auto; flex:1; background: #36393f;" id="cart-items-list"></div>
             <div style="padding: 20px; background: #2f3136; border-top: 1px solid #202225;">
                 <div style="display:flex; justify-content:space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px;">
                     <span>Gesamt:</span>
@@ -568,9 +620,34 @@
                 <hr style="border-color: rgba(255,255,255,0.1);">
                 <p style="font-size: 1.2rem;"><b>Ausgegeben:</b> <span id="profile-spent" style="color: var(--secondary); font-weight: bold;">0€</span></p>
             </div>
-            <button class="btn" style="margin-top: 20px; background: #40444b; width: 100%;" onclick="openHistory()">
+            
+            <button class="btn btn-info" style="margin-top: 15px; width: 100%;" onclick="openPasswordChange()">
+                <i class="fas fa-key"></i> Passwort ändern
+            </button>
+
+            <button class="btn" style="margin-top: 10px; background: #40444b; width: 100%;" onclick="openHistory()">
                 <i class="fas fa-history"></i> Kaufverlauf ansehen
             </button>
+        </div>
+    </div>
+
+    <div id="password-change-modal" class="modal-overlay hidden">
+        <div class="auth-box" style="border-color: #5865F2;">
+            <h3 style="margin-top: 0;">Passwort ändern</h3>
+            
+            <label style="display:block; text-align:left; font-size:0.8rem; margin-top:10px;">Aktuelles Passwort</label>
+            <input type="password" id="change-pass-old" placeholder="Altes Passwort...">
+            
+            <label style="display:block; text-align:left; font-size:0.8rem; margin-top:10px;">Neues Passwort</label>
+            <input type="password" id="change-pass-new" placeholder="Neues Passwort...">
+            
+            <label style="display:block; text-align:left; font-size:0.8rem; margin-top:10px;">Bestätigen</label>
+            <input type="password" id="change-pass-confirm" placeholder="Neues Passwort wiederholen...">
+
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn btn-danger" onclick="document.getElementById('password-change-modal').classList.add('hidden')">Abbrechen</button>
+                <button class="btn btn-success" onclick="submitPasswordChange()">Speichern</button>
+            </div>
         </div>
     </div>
 
@@ -593,7 +670,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, set, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
@@ -618,7 +695,6 @@
             { name: "West", price: 2500, icon: "fa-shield-halved" },
             { name: "Metal", price: 500, icon: "fa-cubes" },
             { name: "Molotov", price: 1000, icon: "fa-fire" },
-            // Titanium Icon changed to fa-layer-group
             { name: "Titanium", price: 1500, icon: "fa-layer-group" },
             { name: "Cloth", price: 750, icon: "fa-shirt" },
             { name: "Helm", price: 3500, icon: "fa-helmet-safety" },
@@ -633,8 +709,12 @@
             { name: "Kaputte Flasche", price: 500, icon: "fa-wine-glass-empty" },
             { name: "Feuerwerks RPG", price: 75000, icon: "fa-meteor" },
             { name: "Feuerwerks RPG Munition", price: 10000, icon: "fa-fire" },
+            /* --- NEUE ITEMS --- */
+            { name: "Mainboard lvl 2", price: 25000, icon: "fa-microchip" },
+            { name: "Mainboard lvl 3", price: 65000, icon: "fa-server" },
+            { name: "Kupfer", price: 2500, icon: "fa-coins" }
         ];
-        
+
         let currentUser = null;
         let isRegistering = false;
         let currentChatId = null;
@@ -642,9 +722,39 @@
         const ADMIN_USERNAME = "Knödel";
         // Warenkorb
         let cart = [];
-        
         // Stock Status (lokal)
         let globalStockData = {};
+        
+        // --- CUSTOM ALERT & CONFIRM HELPER ---
+        let confirmCallback = null;
+
+        window.showCustomAlert = (title, message) => {
+            document.getElementById("custom-alert-title").innerText = title;
+            document.getElementById("custom-alert-text").innerText = message;
+            document.getElementById("custom-alert-modal").classList.remove("hidden");
+        };
+
+        window.showCustomConfirm = (title, message, callback) => {
+            document.getElementById("custom-confirm-title").innerText = title;
+            document.getElementById("custom-confirm-text").innerText = message;
+            // Speichere den Callback
+            confirmCallback = callback;
+            document.getElementById("custom-confirm-modal").classList.remove("hidden");
+        };
+
+        window.closeCustomConfirm = () => {
+            document.getElementById("custom-confirm-modal").classList.add("hidden");
+            confirmCallback = null;
+        };
+
+        // Event Listener für den Bestätigen Button im Confirm Modal
+        // WICHTIG: Dies fixt das Problem, dass "nichts passiert"
+        document.getElementById("custom-confirm-btn").onclick = () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeCustomConfirm();
+        };
 
         // --- AUTH ---
         window.toggleAuthMode = () => {
@@ -657,7 +767,7 @@
         window.handleAuth = () => {
             const user = document.getElementById("username").value.trim();
             const pass = document.getElementById("password").value;
-            if(!user || !pass) return alert("Bitte alles ausfüllen!");
+            if(!user || !pass) return showCustomAlert("Fehler", "Bitte alles ausfüllen!");
             
             const email = user.toLowerCase().replace(/\s/g, '') + "@shop-rpg.local";
             if(isRegistering) {
@@ -671,9 +781,9 @@
                             banned: false
                         });
                     })
-                    .catch((e) => alert("Fehler: " + e.message));
+                    .catch((e) => showCustomAlert("Fehler", e.message));
             } else {
-                signInWithEmailAndPassword(auth, email, pass).catch(() => alert("Login fehlgeschlagen."));
+                signInWithEmailAndPassword(auth, email, pass).catch(() => showCustomAlert("Login Fehler", "Login fehlgeschlagen. Prüfe deine Daten."));
             }
         };
 
@@ -693,6 +803,55 @@
                 document.getElementById("ban-screen").classList.add("hidden");
             }
         });
+
+        // --- PASSWORD CHANGE LOGIC ---
+        window.openPasswordChange = () => {
+            document.getElementById("change-pass-old").value = "";
+            document.getElementById("change-pass-new").value = "";
+            document.getElementById("change-pass-confirm").value = "";
+            document.getElementById("password-change-modal").classList.remove("hidden");
+        };
+
+        window.submitPasswordChange = async () => {
+            const oldPass = document.getElementById("change-pass-old").value;
+            const newPass = document.getElementById("change-pass-new").value;
+            const confirmPass = document.getElementById("change-pass-confirm").value;
+
+            if(!oldPass || !newPass || !confirmPass) {
+                return showCustomAlert("Fehler", "Bitte alle Felder ausfüllen.");
+            }
+            if(newPass !== confirmPass) {
+                return showCustomAlert("Fehler", "Die neuen Passwörter stimmen nicht überein.");
+            }
+            if(newPass.length < 6) {
+                return showCustomAlert("Fehler", "Neues Passwort muss mindestens 6 Zeichen haben.");
+            }
+
+            try {
+                // 1. Re-Authenticate User
+                const credential = EmailAuthProvider.credential(currentUser.email, oldPass);
+                await reauthenticateWithCredential(currentUser, credential);
+
+                // 2. Update Auth Password
+                await updatePassword(currentUser, newPass);
+
+                // 3. Update DB "Fake" Password (for display)
+                await update(ref(db, 'users/' + currentUser.uid), {
+                    password: newPass
+                });
+
+                showCustomAlert("Erfolg", "Passwort erfolgreich geändert!");
+                document.getElementById("password-change-modal").classList.add("hidden");
+
+            } catch (error) {
+                console.error(error);
+                if(error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    showCustomAlert("Fehler", "Das aktuelle Passwort ist falsch.");
+                } else {
+                    showCustomAlert("Fehler", "Fehler beim Ändern: " + error.message);
+                }
+            }
+        };
 
         // --- USER DATA & PROFILE & BAN CHECK ---
         function loadUserData() {
@@ -737,7 +896,6 @@
                     passEl.setAttribute("data-realpass", data.password || "Nicht gespeichert");
                     
                     document.getElementById("profile-spent").innerText = (data.spent || 0).toLocaleString() + " €";
-                    
                     if(data.inbox) {
                         const count = Object.keys(data.inbox).length;
                         document.getElementById("inbox-badge").innerText = count;
@@ -814,20 +972,38 @@
             container.innerHTML = "";
             ITEMS.forEach((item, index) => {
                 const delay = index * 0.05;
-                // Stock Check (undefined means In Stock by default)
-                const inStock = globalStockData[index] !== false; 
+                const stockVal = globalStockData[index];
                 
+                // Logic:
+                // false = Out of Stock
+                // true or undefined = Infinite Stock
+                // Number = Specific Stock
+                
+                const inStock = stockVal !== false;
+                const qtyAvailable = (typeof stockVal === 'number') ? stockVal : null;
+
                 const btnState = inStock ? '' : 'disabled';
                 const btnClass = inStock ? 'btn' : 'btn btn-disabled';
                 const cardClass = inStock ? 'item-card' : 'item-card out-of-stock';
                 const buyText = inStock ? 'Kaufen' : 'Nicht auf Lager';
+                
+                // NEU: Stock Badge oben rechts
+                let stockBadge = '';
+                if(stockVal === false) {
+                    stockBadge = `<div class="stock-badge out">Ausverkauft</div>`;
+                } else if(qtyAvailable !== null) {
+                    stockBadge = `<div class="stock-badge limited">Lager: ${qtyAvailable}</div>`;
+                } else {
+                    stockBadge = `<div class="stock-badge infinite">Vorrätig</div>`;
+                }
 
                 const html = `
                     <div class="${cardClass}" style="animation-delay: ${delay}s">
+                        ${stockBadge}
                         <div>
                              <i class="fas ${item.icon} item-icon"></i>
-                            <div class="item-name">${item.name}</div>
-                            <div class="price">${item.price.toLocaleString()} €</div>
+                             <div class="item-name">${item.name}</div>
+                             <div class="price">${item.price.toLocaleString()} €</div>
                         </div>
                         
                         <div class="qty-controls">
@@ -838,10 +1014,10 @@
                         <div class="action-buttons">
                             <button class="${btnClass} cart-btn" onclick="addToCart(${index})" ${btnState}>
                                  <i class="fas fa-plus"></i>
-                            </button>
+                             </button>
                             <button class="${btnClass}" style="flex:1;" onclick="askConfirmation(${index})" ${btnState}>
-                                ${buyText}
-                            </button>
+                                 ${buyText}
+                             </button>
                         </div>
                     </div>
                   `;
@@ -851,13 +1027,20 @@
 
         // --- CART LOGIC ---
         window.addToCart = (index) => {
-            if(globalStockData[index] === false) return; // Security Check
+            if(globalStockData[index] === false) return;
+            // Security Check
 
             const item = ITEMS[index];
             const qtyInput = document.getElementById(`qty-${index}`);
             const qty = parseInt(qtyInput.value);
             
-            if(qty < 1) return alert("Menge muss mind. 1 sein");
+            if(qty < 1) return showCustomAlert("Fehler", "Menge muss mind. 1 sein");
+            // Check max stock if limited
+            const stockVal = globalStockData[index];
+            if(typeof stockVal === 'number' && qty > stockVal) {
+                return showCustomAlert("Lager", "Nicht genügend auf Lager!");
+            }
+
             cart.push({
                 index: index, // Store index for stock checks
                 name: item.name,
@@ -866,7 +1049,6 @@
                 totalPrice: item.price * qty
             });
             updateCartBadge();
-            
             const btn = document.querySelectorAll('.cart-btn')[index];
             btn.style.color = "#3ba55c";
             setTimeout(() => btn.style.color = "var(--secondary)", 500);
@@ -881,7 +1063,7 @@
         
         // Ensure items in cart are valid when stock changes
         function updateCartWithStock() {
-            // Optional: Remove items or just mark them? For now, we will disable checkout if any item is out of stock.
+            // For now, we will disable checkout if any item is out of stock.
             // This is handled in renderCartList visually.
         }
 
@@ -903,13 +1085,20 @@
                 checkoutBtn.disabled = true;
             } else {
                 cart.forEach((item, idx) => {
-                    // Check Stock
-                    const inStock = globalStockData[item.index] !== false;
+                    // Check Stock Status
+                    const stockVal = globalStockData[item.index];
+                    let inStock = stockVal !== false;
+                    
+                    // Check Quantity Limit
+                    if(typeof stockVal === 'number' && item.qty > stockVal) {
+                        inStock = false; // Not enough stock
+                    }
+
                     if(!inStock) allInStock = false;
                     
                     fullTotal += item.totalPrice;
                     
-                    const stockMsg = inStock ? "" : "<span style='color:#ed4245; font-weight:bold; font-size:0.8rem; display:block;'>NICHT AUF LAGER</span>";
+                    const stockMsg = inStock ? "" : "<span style='color:#ed4245; font-weight:bold; font-size:0.8rem; display:block;'>NICHT GENUG LAGER</span>";
 
                     list.innerHTML += `
                         <div class="list-item-row" style="${!inStock ? 'opacity:0.6;' : ''}">
@@ -918,7 +1107,7 @@
                                 <span style="color:#faa61a">${item.totalPrice.toLocaleString()} €</span>
                                 ${stockMsg}
                              </div>
-                            <i class="fas fa-trash" style="color:#ed4245; cursor:pointer;" onclick="removeFromCart(${idx})"></i>
+                             <i class="fas fa-trash" style="color:#ed4245; cursor:pointer;" onclick="removeFromCart(${idx})"></i>
                         </div>
                     `;
                 });
@@ -946,17 +1135,16 @@
             if(cart.length === 0) return;
             let summaryText = "";
             let fullPrice = 0;
-            
             // Build summary string AND detailed array for history
             let cartDetails = [];
-            
             cart.forEach(c => {
                 summaryText += `${c.name} (x${c.qty}), `;
                 fullPrice += c.totalPrice;
                 cartDetails.push({
                     name: c.name,
                     qty: c.qty,
-                    price: c.singlePrice
+                    price: c.singlePrice,
+                    index: c.index // for reducing stock later if needed
                 });
             });
             summaryText = summaryText.slice(0, -2);
@@ -970,32 +1158,32 @@
 
         // --- DIRECT BUY LOGIC ---
         window.askConfirmation = (index) => {
-             if(globalStockData[index] === false) return;
-             
+            const stockVal = globalStockData[index];
+            if(stockVal === false) return;
+
             const item = ITEMS[index];
             const qty = parseInt(document.getElementById(`qty-${index}`).value);
-            if(qty < 1) return alert("Ungültige Menge");
+            if(qty < 1) return showCustomAlert("Fehler", "Ungültige Menge");
+            if(typeof stockVal === 'number' && qty > stockVal) return showCustomAlert("Lager", "Nicht genügend auf Lager!");
             
             const total = item.price * qty;
             document.getElementById("confirm-text").innerText = `Möchtest du ${qty}x "${item.name}" für ${total.toLocaleString()} € wirklich kaufen?`;
             document.getElementById("confirm-modal").classList.remove("hidden");
             document.getElementById("confirm-btn-action").onclick = () => {
                 // Single item detail for history
-                const details = [{ name: item.name, qty: qty, price: item.price }];
+                const details = [{ name: item.name, qty: qty, price: item.price, index: index }];
                 startTrade(`${item.name} (x${qty})`, total, details);
                 closeConfirm();
             };
         };
 
         window.closeConfirm = () => document.getElementById("confirm-modal").classList.add("hidden");
-
         // --- CHAT SYSTEM ---
         async function startTrade(itemName, itemPrice, detailsArray) {
             const chatRef = push(ref(db, 'chats'));
             const chatId = chatRef.key;
             const snap = await get(ref(db, 'users/' + currentUser.uid));
             const username = snap.val().username;
-            
             await set(chatRef, {
                 buyerId: currentUser.uid,
                 buyerName: username,
@@ -1005,7 +1193,6 @@
                 timestamp: Date.now(),
                 historyDetails: detailsArray || [] // Store details for later
             });
-
             push(ref(db, `chats/${chatId}/messages`), {
                 sender: 'System',
                 text: `🛒 **NEUER KAUF**\nUser: ${username}\nItems: ${itemName}\nGesamt: ${itemPrice.toLocaleString()}€`,
@@ -1042,14 +1229,13 @@
                     container.scrollTop = container.scrollHeight;
                 }
             });
-
             get(ref(db, 'users/' + currentUser.uid)).then(snap => {
                 if(snap.val().username === ADMIN_USERNAME) {
                     document.getElementById("admin-chat-actions").classList.remove("hidden");
                 } else {
                     document.getElementById("admin-chat-actions").classList.add("hidden");
                 }
-             });
+            });
         };
 
         window.sendMessage = async () => {
@@ -1121,11 +1307,11 @@
             }
         };
 
-        // --- ADMIN: PRODUKTE VERWALTEN (NEU) ---
-        let localStockEdit = {}; // Temporary holding for UI
-        
+        // --- ADMIN: PRODUKTE VERWALTEN (NEU MIT MENGE) ---
+        let localStockEdit = {};
         window.openProductManager = () => {
-            localStockEdit = {...globalStockData}; // Copy current state
+            localStockEdit = {...globalStockData};
+            // Copy existing state
             document.getElementById("product-manager-modal").classList.remove("hidden");
             renderProductManagerList();
         };
@@ -1135,12 +1321,15 @@
             list.innerHTML = "";
             
             ITEMS.forEach((item, index) => {
-                // Default true if undefined
-                const inStock = localStockEdit[index] !== false;
+                // Determine current state
+                let rawVal = localStockEdit[index];
+                let isActive = rawVal !== false;
+                let qtyVal = (typeof rawVal === 'number') ? rawVal : '';
                 
-                const btnColor = inStock ? '#3ba55c' : '#ed4245';
-                const btnText = inStock ? 'Auf Lager' : 'Nicht auf Lager';
-                
+                const btnColor = isActive ? '#3ba55c' : '#ed4245';
+                const btnText = isActive ? 'Aktiv' : 'Inaktiv';
+                const inputDisabled = !isActive ? 'disabled' : '';
+
                 const div = document.createElement("div");
                 div.className = "product-manage-row";
                 div.innerHTML = `
@@ -1148,24 +1337,56 @@
                         <i class="fas ${item.icon}" style="color:var(--secondary); width:20px;"></i>
                         <span>${item.name}</span>
                     </div>
-                    <button class="btn" style="background:${btnColor}; padding: 5px 10px; font-size: 0.8rem; width:120px; box-shadow:none;" onclick="toggleStockStatus(${index})">
-                        ${btnText}
-                    </button>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                         <input type="number" 
+                                id="admin-qty-${index}" 
+                                class="admin-qty-input" 
+                                placeholder="∞" 
+                                value="${qtyVal}" 
+                                onchange="updateStockValue(${index})"
+                                ${inputDisabled}
+                         >
+                         <button class="btn" 
+                                style="background:${btnColor}; padding: 5px 10px; font-size: 0.8rem; width:80px; box-shadow:none;" 
+                            onclick="toggleStockStatus(${index})">
+                            ${btnText}
+                        </button>
+                    </div>
                 `;
                 list.appendChild(div);
             });
-            // Bottom Save Button already in HTML
         }
 
         window.toggleStockStatus = (index) => {
-            const current = localStockEdit[index] !== false;
-            localStockEdit[index] = !current;
+            const currentRaw = localStockEdit[index];
+            const isCurrentlyActive = currentRaw !== false;
+            
+            if(isCurrentlyActive) {
+                // Turn OFF
+                localStockEdit[index] = false;
+            } else {
+                // Turn ON (Default to Infinite/True)
+                localStockEdit[index] = true;
+            }
             renderProductManagerList();
+        };
+
+        window.updateStockValue = (index) => {
+            const input = document.getElementById(`admin-qty-${index}`);
+            let val = input.value;
+            
+            // If empty string -> Infinite (true)
+            // If number -> Number
+            if(val === '') {
+                localStockEdit[index] = true;
+            } else {
+                localStockEdit[index] = parseInt(val);
+            }
         };
 
         window.saveStockSettings = async () => {
             await set(ref(db, 'stock'), localStockEdit);
-            alert("Produktstatus gespeichert!");
+            showCustomAlert("Info", "Produktstatus gespeichert!");
             document.getElementById("product-manager-modal").classList.add("hidden");
         };
 
@@ -1215,7 +1436,7 @@
                     document.getElementById("btn-unban-action").classList.add("hidden");
                 }
             } else {
-                alert("User nicht gefunden!");
+                showCustomAlert("Fehler", "User nicht gefunden!");
                 document.getElementById("user-manage-actions").classList.add("hidden");
             }
         };
@@ -1225,42 +1446,43 @@
             const title = document.getElementById("admin-notif-title").value;
             const msg = document.getElementById("admin-notif-msg").value;
             
-            if(!title || !msg) return alert("Titel und Text eingeben.");
+            if(!title || !msg) return showCustomAlert("Fehler", "Titel und Text eingeben.");
             await push(ref(db, `users/${targetUserUid}/inbox`), {
                 title: title,
                 message: msg,
                 timestamp: Date.now()
             });
-            alert("Nachricht gesendet!");
+            showCustomAlert("Erfolg", "Nachricht gesendet!");
         };
 
         window.banUserAction = async () => {
             if(!targetUserUid) return;
-            if(!confirm("User wirklich PERMANENT sperren?")) return;
-            
-            // Permanent Ban = banned true, no expiration
-            await update(ref(db, `users/${targetUserUid}`), { banned: true, banExpires: null });
-            alert("User permanent gesperrt.");
-            document.getElementById("user-manager-modal").classList.add("hidden");
+            showCustomConfirm("Bestätigung", "User wirklich PERMANENT sperren?", async () => {
+                // Permanent Ban = banned true, no expiration
+                await update(ref(db, `users/${targetUserUid}`), { banned: true, banExpires: null });
+                showCustomAlert("Erfolg", "User permanent gesperrt.");
+                document.getElementById("user-manager-modal").classList.add("hidden");
+            });
         };
 
         window.banUser24hAction = async () => {
             if(!targetUserUid) return;
-            if(!confirm("User für 24 Stunden sperren?")) return;
-
-            const expiration = Date.now() + (24 * 60 * 60 * 1000); // 24 Stunden ab jetzt
-            await update(ref(db, `users/${targetUserUid}`), { 
-                banned: true,
-                banExpires: expiration
+            showCustomConfirm("Bestätigung", "User für 24 Stunden sperren?", async () => {
+                const expiration = Date.now() + (24 * 60 * 60 * 1000);
+                // 24 Stunden ab jetzt
+                await update(ref(db, `users/${targetUserUid}`), { 
+                    banned: true,
+                    banExpires: expiration
+                });
+                showCustomAlert("Erfolg", "User für 24h gesperrt.");
+                document.getElementById("user-manager-modal").classList.add("hidden");
             });
-            alert("User für 24h gesperrt.");
-            document.getElementById("user-manager-modal").classList.add("hidden");
         };
 
         window.unbanUserAction = async () => {
             if(!targetUserUid) return;
             await update(ref(db, `users/${targetUserUid}`), { banned: false, banExpires: null });
-            alert("User entsperrt.");
+            showCustomAlert("Erfolg", "User entsperrt.");
             document.getElementById("user-manager-modal").classList.add("hidden");
         };
 
@@ -1289,7 +1511,22 @@
         }
 
         // --- KAUF ABWICKLUNG & HISTORY SAVING ---
-        window.confirmPurchase = async () => {
+        // Wrapper für die Buttons im Chat (Admin klickt)
+        window.confirmPurchaseClick = () => {
+            // Zeige die Bestätigung und übergebe die Funktion, die beim Klick auf "Bestätigen" ausgeführt werden soll
+            showCustomConfirm("Kauf abschließen", "Soll dieser Kauf als erfolgreich markiert werden?", () => {
+                confirmPurchase();
+            });
+        };
+
+        window.cancelPurchaseClick = () => {
+            showCustomConfirm("Kauf abbrechen", "Möchtest du diesen Kauf wirklich stornieren?", () => {
+                cancelPurchase();
+            });
+        };
+
+        async function confirmPurchase() {
+            if (!currentChatId) return;
             const chatSnap = await get(ref(db, `chats/${currentChatId}`));
             const chatData = chatSnap.val();
             const userRef = ref(db, `users/${chatData.buyerId}`);
@@ -1298,7 +1535,6 @@
 
             // 1. Update Spent
             await update(userRef, { spent: newSpent });
-            
             // 2. Add to History
             await push(ref(db, `users/${chatData.buyerId}/history`), {
                 items: chatData.historyDetails || [{name: chatData.product, qty: 1, price: chatData.price}],
@@ -1306,19 +1542,20 @@
                 timestamp: Date.now()
             });
 
-            // 3. Notify User
+            // 4. Notify User
             await push(ref(db, `users/${chatData.buyerId}/inbox`), {
                 title: "Kauf Erfolgreich! ✅",
                 message: `Du hast erhalten:\n${chatData.product}`,
                 timestamp: Date.now()
             });
-
-            // 4. Remove Chat
+            // 5. Remove Chat
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
-        };
+            showCustomAlert("Erfolg", "Kauf abgeschlossen!");
+        }
 
-        window.cancelPurchase = async () => {
+        async function cancelPurchase() {
+            if (!currentChatId) return;
             const chatSnap = await get(ref(db, `chats/${currentChatId}`));
             const chatData = chatSnap.val();
 
@@ -1329,11 +1566,13 @@
             });
             await remove(ref(db, `chats/${currentChatId}`));
             closeChat();
-        };
+            showCustomAlert("Info", "Kauf abgebrochen.");
+        }
 
         // --- KAUFVERLAUF (HISTORY) ---
         window.openHistory = () => {
-            document.getElementById("profile-modal").classList.add("hidden"); // Close Profile
+            document.getElementById("profile-modal").classList.add("hidden");
+            // Close Profile
             document.getElementById("history-modal").classList.remove("hidden");
             
             const list = document.getElementById("history-list");
@@ -1370,7 +1609,6 @@
                     div.style.marginBottom = "15px";
                     div.style.background = "#202225";
                     div.style.borderLeftColor = "#3ba55c";
-                    
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                             <small style="opacity:0.5">${date}</small>
@@ -1379,7 +1617,7 @@
                         <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:4px;">
                             ${itemsHtml}
                         </div>
-                    `;
+                      `;
                     list.appendChild(div);
                 });
             }, { onlyOnce: true });
@@ -1401,16 +1639,17 @@
                     div.className = "embed-msg embed-system"; 
                     div.style.marginBottom = "10px";
                     div.style.textAlign = "left";
-    
+
                     div.innerHTML = `<b>${msg.title}</b><br>${msg.message.replace(/\n/g, '<br>')}<br><small style='opacity:0.5; display:block; margin-top:5px;'>${new Date(msg.timestamp).toLocaleTimeString()}</small>`;
                     list.appendChild(div);
                 });
-            }); 
+            });
         };
 
         window.clearInbox = async () => {
-            if(!confirm("Möchtest du wirklich alle Nachrichten löschen?")) return;
-            await remove(ref(db, `users/${currentUser.uid}/inbox`));
+            showCustomConfirm("Postfach", "Möchtest du wirklich alle Nachrichten löschen?", async () => {
+                await remove(ref(db, `users/${currentUser.uid}/inbox`));
+            });
         };
         
         window.openProfile = () => document.getElementById("profile-modal").classList.remove("hidden");
